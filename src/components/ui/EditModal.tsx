@@ -1,7 +1,10 @@
 "use client";
-
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils"; 
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,12 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { ChevronDownIcon, Loader2 } from "lucide-react";
 
 export interface FieldConfig {
   key: string;
   label: string;
-  type: "text" | "email" | "tel" | "number" | "url" | "select" | "textarea";
+  type: "text" | "email" | "tel" | "number" | "url" | "select" | "textarea" | "date";
   required?: boolean;
   placeholder?: string;
   options?: string[] | { value: string; label: string }[];
@@ -165,6 +168,39 @@ export const DynamicEditDialog: React.FC<DynamicEditDialogProps> = ({
                     })}
                   </SelectContent>
                 </Select>
+              ) : field.type === "date" ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formField.value && "text-muted-foreground"
+                      )}
+                    >
+                      {formField.value ? format(new Date(formField.value), "PPP") : field.placeholder || "Pick a date"}
+                      <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-auto p-0" 
+                    align="start"
+                    side="bottom"
+                    sideOffset={4}
+                  >
+                    <div className="[&_.rdp-dropdown_select]:max-h-[60px] [&_.rdp-dropdown_select]:overflow-y-auto [&_.rdp-dropdown_select]:scrollbar-thin">
+                      <Calendar
+                        mode="single"
+                        selected={formField.value ? new Date(formField.value) : undefined}
+                        onSelect={(date) => formField.onChange(date?.toISOString())}
+                        captionLayout="dropdown"
+                        fromYear={2000}
+                        toYear={new Date().getFullYear() + 10}
+                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
               ) : field.type === "textarea" ? (
                 <textarea
                   {...formField}
@@ -188,7 +224,8 @@ export const DynamicEditDialog: React.FC<DynamicEditDialogProps> = ({
             </FormControl>
             <FormMessage />
           </FormItem>
-        )}
+        )
+      }
       />
     );
   };
@@ -217,11 +254,11 @@ export const DynamicEditDialog: React.FC<DynamicEditDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
               {fields.map(renderField)}
             </div>
 
-            <DialogFooter className="gap-2 pt-4">
+            <DialogFooter className="gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>

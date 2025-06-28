@@ -130,6 +130,14 @@ const [filteredData, setFilteredData] = useState<User[]>([]);
       placeholder: "Enter email address"
     },
     {
+      key: "birthDate",
+      label: "Birth Date",
+      type: "date",
+      required: true,
+      placeholder: "Select birth date",
+      validation: { message: "Please select a valid date" }
+    },
+    {
       key: "phone",
       label: "Phone",
       type: "tel",
