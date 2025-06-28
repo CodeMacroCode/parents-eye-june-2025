@@ -24,7 +24,26 @@ interface User {
   image: string;
   company: {
     name: string;
+    department?: string;
+    title?: string;
   };
+  bloodGroup: string;
+  height: number;
+  weight: number;
+  eyeColor: string;
+  hair: {
+    color: string;
+    type: string;
+  };
+  address?: {
+    address?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+  };
+  university?: string;
+  ip?: string;
+  macAddress?: string;
 }
 
 export const MyPageTable = () => {
@@ -241,7 +260,7 @@ const [filteredData, setFilteredData] = useState<User[]>([]);
         ),
       }),
       cell: (info) => info.getValue(),
-      meta: { flex: 3, minWidth: 200 },
+      meta: { flex: 3, minWidth: 500 },
     },
     {
        header:"Birth Date",
@@ -284,6 +303,144 @@ const [filteredData, setFilteredData] = useState<User[]>([]);
       cell: (info) => info.getValue(),
       meta: { flex: 2, minWidth: 150, maxWidth: 250 },
     },
+    {
+  header: "Blood Group",
+  accessorFn: row => ({ type: "text", value: row.bloodGroup }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 100 },
+},
+{
+  header: "Height (cm)",
+  accessorFn: row => ({ type: "text", value: row.height.toString() }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 100 },
+},
+{
+  header: "Weight (kg)",
+  accessorFn: row => ({ type: "text", value: row.weight.toString() }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 100 },
+},
+{
+  header: "Eye Color",
+  accessorFn: row => ({ type: "text", value: row.eyeColor }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 100 },
+},
+{
+  header: "Hair",
+  accessorFn: row => ({
+    type: "text",
+    value: `${row.hair.color} (${row.hair.type})`,
+  }),
+  cell: info => info.getValue(),
+  meta: { flex: 2, minWidth: 150 },
+},
+{
+  header: "Address",
+  accessorFn: row => ({
+    type: "custom",
+    render: () => (
+      <div className="break-words">
+        {row.address?.address}, {row.address?.city}, {row.address?.state} {row.address?.postalCode}
+      </div>
+    ),
+  }),
+  cell: info => info.getValue(),
+  meta: { flex: 3, minWidth: 200 },
+},
+{
+  header: "University",
+  accessorFn: row => ({ type: "text", value: row.university }),
+  cell: info => info.getValue(),
+  meta: { flex: 2, minWidth: 150 },
+},
+{
+  header: "Department",
+  accessorFn: row => ({ type: "text", value: row.company?.department }),
+  cell: info => info.getValue(),
+  meta: { flex: 2, minWidth: 150 },
+},
+{
+  header: "Job Title",
+  accessorFn: row => ({ type: "text", value: row.company?.title }),
+  cell: info => info.getValue(),
+  meta: { flex: 2, minWidth: 150 },
+},
+{
+  header: "IP Address",
+  accessorFn: row => ({ type: "text", value: row.ip }),
+  cell: info => info.getValue(),
+  meta: { flex: 1.5, minWidth: 150 },
+},
+{
+  header: "MAC Address",
+  accessorFn: row => ({ type: "text", value: row.macAddress }),
+  cell: info => info.getValue(),
+  meta: { flex: 1.5, minWidth: 150 },
+}
+    ,
+    {
+  header: "Hobby",
+  accessorFn: () => ({ type: "text", value: "Reading" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Favorite Color",
+  accessorFn: () => ({ type: "text", value: "Blue" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Pet Name",
+  accessorFn: () => ({ type: "text", value: "Buddy" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Marital Status",
+  accessorFn: () => ({ type: "text", value: "Single" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Country",
+  accessorFn: () => ({ type: "text", value: "India" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "City",
+  accessorFn: () => ({ type: "text", value: "Pune" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Language",
+  accessorFn: () => ({ type: "text", value: "English" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "Driving License",
+  accessorFn: () => ({ type: "text", value: "Yes" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 120 },
+},
+{
+  header: "PAN Number",
+  accessorFn: () => ({ type: "text", value: "ABCDE1234F" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1, minWidth: 150 },
+},
+{
+  header: "Aadhar Number",
+  accessorFn: () => ({ type: "text", value: "1234-5678-9012" }),
+  cell: info => info.getValue(),
+  meta: { flex: 1.5, minWidth: 180 },
+}
+    ,
     {
       header: "Actions",
       accessorFn: (row) => ({
