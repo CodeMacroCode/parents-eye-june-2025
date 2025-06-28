@@ -116,7 +116,7 @@ export function CustomTable<TData extends RowData>({
     return <div className="text-center w-full font-medium">{serialNumber}</div>;
   },
   enableSorting: false,
-  meta: { minWidth: 60, maxWidth: 80, flex: 0 },
+  meta: { minWidth: 70, maxWidth: 80, flex: 0 },
 };
 
 
