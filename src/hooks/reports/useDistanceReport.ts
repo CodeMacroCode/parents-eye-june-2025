@@ -17,12 +17,16 @@ export const useDistanceReport = ({
   hasGenerated,
 }: Props) => {
   const uniqueIds = parseUniqueIds(filters?.uniqueId);
+  const isAll =
+    (pagination.pageSize as any) === "All" ||
+    (pagination.pageSize as any) === "all" ||
+    pagination.pageSize >= 1000;
 
   return useQuery({
     queryKey: [
       "distance-report",
-      pagination.pageIndex,
-      pagination.pageSize,
+      isAll ? "all" : pagination.pageIndex,
+      isAll ? "all" : pagination.pageSize,
       filters?.uniqueId,
       filters?.period,
       filters?.from,
@@ -31,8 +35,8 @@ export const useDistanceReport = ({
 
     queryFn: () =>
       reportService.getDistanceReport({
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
+        page: 1,
+        limit: isAll ? "all" : pagination.pageSize,
         uniqueIds,
         period: filters?.period || "Custom",
         from: filters?.from,

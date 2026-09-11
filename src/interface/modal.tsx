@@ -657,3 +657,38 @@ export type GeofenceExpandedRow =
       vehicleName?: string;
       uniqueId?: string;
     };
+
+export interface Incident {
+  _id: string;
+  email: string;
+  region: string;
+  category: string;
+  severity?: string;
+  reportedBy: string;
+  subCategory: string;
+  stakeholders: string[];
+  briefDescription: string;
+  immediateActionTaken: string;
+  pendingAction: string;
+  closureDate: string;
+  date: string;
+  status: string;
+  escalationStatus: string;
+  escalatedTo: string;
+  remarks: string;
+  schoolId: string;
+  branchId: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  schoolName: string;
+  branchName: string;
+}
+
+export interface IncidentResponse {
+  success: boolean;
+  total: number;
+  page: number;
+  limit: number;
+  data: Incident[];
+}

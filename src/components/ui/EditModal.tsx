@@ -290,7 +290,7 @@ export const DynamicEditDialog: React.FC<DynamicEditDialogProps> = ({
                     formField.onChange(value);
                     onFieldChange?.(field.key, value);
                   }}
-                  value={formField.value}
+                  value={formField.value ? String(formField.value) : undefined}
                   disabled={field.disabled}
                 >
                   <SelectTrigger>

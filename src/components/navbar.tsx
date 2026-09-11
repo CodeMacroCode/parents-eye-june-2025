@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useNavigationStore } from "@/store/navigationStore";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -21,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const SHOW_SIDEBAR_SECTIONS = [
   "Master",
@@ -31,6 +33,7 @@ const SHOW_SIDEBAR_SECTIONS = [
 ];
 
 export function Navbar() {
+  const pathname = usePathname();
   const activeSection = useNavigationStore((state) => state.activeSection);
   const setActiveSection = useNavigationStore(
     (state) => state.setActiveSection
@@ -42,7 +45,9 @@ export function Navbar() {
 
   const navigationMap: Record<string, string> = {
     Dashboard: "/dashboard",
+    "Incident Management": "/dashboard/incident-management",
     Maintenance: `${process.env.NEXT_PUBLIC_MAINTENANCE_URL}`,
+    "Basic Maintenance": "/dashboard/basic-maintenance",
     Geofence: "/dashboard/school/geofence",
     Notifications: "/dashboard/users/notification",
   };
@@ -53,14 +58,30 @@ export function Navbar() {
     "School",
     "Users",
     "Reports",
+    "Incident Management",
     "Maintenance",
+    "Basic Maintenance",
     "Support",
   ];
+
+  React.useEffect(() => {
+    if (pathname === "/dashboard/basic-maintenance") {
+      setActiveSection("Basic Maintenance");
+    } else if (pathname === "/dashboard/incident-management") {
+      setActiveSection("Incident Management");
+    } else if (pathname === "/dashboard") {
+      setActiveSection("Dashboard");
+    }
+  }, [pathname, setActiveSection]);
 
   const handleNavClick = React.useCallback(
     (section: string) => {
       setMobileMenuOpen(false);
-      if (section === "Dashboard") {
+      if (
+        section === "Dashboard" ||
+        section === "Incident Management" ||
+        section === "Basic Maintenance"
+      ) {
         setActiveSection(section);
         setOpenMobile(false);
         setOpen(false);
@@ -149,24 +170,50 @@ export function Navbar() {
       </div>
 
       {/* Desktop nav links - absolutely centered horizontally and vertically */}
-      <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center z-[9999]">
-        <NavigationMenu>
-          <NavigationMenuList className="flex-wrap justify-center gap-1 lg:gap-2">
-            {navSections.map((section) => (
-              <NavigationMenuItem key={section}>
-                <NavigationMenuLink
-                  asChild
-                  className="text-xs lg:text-sm px-2 lg:px-3 py-1.5 lg:py-2 whitespace-nowrap font-semibold hover:font-bold transition-colors duration-200 focus:font-bold hover:bg-yellow-500/20 rounded-md"
-                >
-                  <Link
-                    href={navigationMap[section] || "#"}
-                    onClick={() => handleNavClick(section)}
+      <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center z-[9999] max-w-[calc(100%-160px)]">
+        <NavigationMenu className="max-w-full">
+          <NavigationMenuList className="flex-nowrap justify-center gap-0.5 sm:gap-1 xl:gap-1.5">
+            {navSections.map((section) => {
+              const isActive =
+                activeSection === section ||
+                (section === "Basic Maintenance" &&
+                  pathname === "/dashboard/basic-maintenance") ||
+                (section === "Incident Management" &&
+                  pathname.startsWith("/dashboard/incident-management")) ||
+                (section === "Dashboard" && pathname === "/dashboard");
+              return (
+                <NavigationMenuItem key={section}>
+                  <NavigationMenuLink
+                    asChild
+                    className={cn(
+                      "text-xs xl:text-sm px-1.5 sm:px-2 xl:px-2.5 py-1 xl:py-1.5 whitespace-nowrap font-semibold hover:font-bold transition-colors duration-200 focus:font-bold rounded-md",
+                      isActive
+                        ? "bg-yellow-500/30 text-yellow-950 font-bold"
+                        : "hover:bg-yellow-500/20 text-yellow-900"
+                    )}
                   >
-                    {section}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
+                    <Link
+                      href={navigationMap[section] || "#"}
+                      onClick={() => handleNavClick(section)}
+                    >
+                      {section === "Incident Management" ? (
+                        <>
+                          <span className="hidden xl:inline">Incident Management</span>
+                          <span className="xl:hidden">Incident</span>
+                        </>
+                      ) : section === "Basic Maintenance" ? (
+                        <>
+                          <span className="hidden xl:inline">Basic Maintenance</span>
+                          <span className="xl:hidden">Basic Maint.</span>
+                        </>
+                      ) : (
+                        section
+                      )}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              );
+            })}
           </NavigationMenuList>
         </NavigationMenu>
       </div>

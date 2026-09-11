@@ -37,7 +37,7 @@ export const reportService = {
   }: {
     uniqueIds: number[];
     page: number;
-    limit: number;
+    limit: number | string;
     period: string;
     from: string;
     to: string;
@@ -92,7 +92,7 @@ export const reportService = {
   }: {
     uniqueIds: number[];
     page: number;
-    limit: number;
+    limit: number | string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     period: string;

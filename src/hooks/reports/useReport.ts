@@ -137,9 +137,14 @@ export const useReport = (
     placeholderData: keepPreviousData,
   });
 
+  const isAllDistance =
+    (pagination.pageSize as any) === "All" ||
+    (pagination.pageSize as any) === "all" ||
+    pagination.pageSize >= 1000;
+
   const distanceReportPayload = {
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
+    page: 1,
+    limit: isAllDistance ? "all" : pagination.pageSize,
     uniqueIds: parseUniqueIds(filters?.uniqueId),
     period: filters?.period || "Custom",
     from: filters?.from,
@@ -149,8 +154,8 @@ export const useReport = (
   const getDistanceReportQuery = useQuery({
     queryKey: [
       "distance-report",
-      pagination.pageIndex,
-      pagination.pageSize,
+      isAllDistance ? "all" : pagination.pageIndex,
+      isAllDistance ? "all" : pagination.pageSize,
       filters?.uniqueId,
       filters?.period,
       filters?.from,
@@ -278,11 +283,16 @@ export const useReport = (
     placeholderData: keepPreviousData,
   });
 
+  const isAllTravel =
+    (pagination.pageSize as any) === "All" ||
+    (pagination.pageSize as any) === "all" ||
+    pagination.pageSize >= 1000;
+
   const travelSummaryPayload = {
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
+    page: 1,
+    limit: isAllTravel ? "all" : pagination.pageSize,
     sortBy: sorting?.[0]?.id,
-    sortOrder: sorting?.[0]?.desc ? "desc" : "asc",
+    sortOrder: (sorting?.[0]?.desc ? "desc" : "asc") as "asc" | "desc",
     uniqueIds: parseUniqueIds(filters?.uniqueId),
     period: filters?.period || "Custom",
     from: filters?.from,
@@ -292,8 +302,8 @@ export const useReport = (
    const getTravelSummaryReportQuery = useQuery({
      queryKey: [
        "travel-summary",
-       pagination.pageIndex,
-       pagination.pageSize,
+       isAllTravel ? "all" : pagination.pageIndex,
+       isAllTravel ? "all" : pagination.pageSize,
        sorting,
        filters?.uniqueId,
        filters?.period,
