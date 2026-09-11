@@ -46,6 +46,8 @@ import {
   XCircle,
   MessageCircle,
   Ticket,
+  BarChart3,
+  ShieldAlert,
 } from "lucide-react";
 import { GiGps } from "react-icons/gi";
 import Image from "next/image";
@@ -92,6 +94,8 @@ const iconMap: Record<string, React.ElementType> = {
   Category: FileText,
   "Ticket Types": Ticket,
   "Send Broadcast": Bell,
+  "Analytics Report": BarChart3,
+  "Incident Management": ShieldAlert,
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -241,11 +245,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               title: "Route Report",
               url: "/dashboard/reports/route-report",
             },
+            {
+              title: "Analytics Report",
+              url: "/dashboard/reports/analytics-report",
+            },
           ];
         case "Support":
           return [
             { title: "Chat Box", url: "/dashboard/support/contact-us" },
             { title: "Raise Ticket", url: "/dashboard/support/raise-ticket" },
+            { title: "Incident Management", url: "/dashboard/incident-management" },
             // { title: "Answer Ticket", url: "/dashboard/support/answer-ticket" },
             { title: "FAQ", url: "/dashboard/support/faq" },
           ];

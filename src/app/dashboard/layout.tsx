@@ -17,6 +17,7 @@ import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { AiChatBot } from "@/components/dashboard/AiChatBot";
 
 export default function DashboardLayout({
   children,
@@ -98,6 +99,7 @@ export default function DashboardLayout({
           <main className="pt-2 md:pt-4 px-2 md:px-4 overflow-auto h-full">
             <FCMHandler />
             {children}
+            <AiChatBot />
           </main>
         </SidebarInset>
       </SidebarProvider>

@@ -85,6 +85,7 @@ export interface DataTableProps<T> {
   getRowClassName?: (row: T, isSelected: boolean) => string;
   selectedRowClassName?: string;
 
+  showPagination?: boolean;
   enableMultiSelect?: boolean;
 
   enableVirtualization?: boolean;
@@ -123,6 +124,7 @@ export function CustomTableServerSidePagination<
     (row as any).id ||
     (row as any).deviceId ||
     (row as any).key,
+  showPagination = true,
   enableMultiSelect = false,
   enableVirtualization = false,
   estimatedRowHeight = 50,
@@ -358,16 +360,28 @@ export function CustomTableServerSidePagination<
               <TableHeader className="sticky top-0 bg-[#f5da6c] z-20 shadow-sm">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="bg-[#f5da6c] text-foreground px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider border-r last:border-r-0 sticky top-0"
-                        style={{
-                          width: header.id === "serialNumber" ? "60px" : "auto",
-                          minWidth:
-                            header.id === "serialNumber" ? "60px" : "auto",
-                        }}
-                      >
+                    {headerGroup.headers.map((header) => {
+                      const wrapConfig = enableColumnWrapping
+                        ? (header.column.columnDef.meta as any)?.wrapConfig
+                        : undefined;
+                      const wrapStyles = getWrapStyles(wrapConfig);
+
+                      return (
+                        <TableHead
+                          key={header.id}
+                          className="bg-[#f5da6c] text-foreground px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider border-r last:border-r-0 sticky top-0"
+                          style={{
+                            width:
+                              header.id === "serialNumber"
+                                ? "60px"
+                                : wrapStyles.width || "auto",
+                            minWidth:
+                              header.id === "serialNumber"
+                                ? "60px"
+                                : wrapStyles.minWidth || "auto",
+                            maxWidth: wrapStyles.maxWidth,
+                          }}
+                        >
                         {header.isPlaceholder ? null : (
                           <div
                             className={`flex items-center justify-center gap-1 w-full ${
@@ -397,7 +411,8 @@ export function CustomTableServerSidePagination<
                           </div>
                         )}
                       </TableHead>
-                    ))}
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -546,96 +561,100 @@ export function CustomTableServerSidePagination<
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-2">
-          <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
-            <span className="hidden sm:inline">
-              Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-              {Math.min(
-                (pagination.pageIndex + 1) * pagination.pageSize,
-                totalCount
-              )}{" "}
-              of {totalCount} results
-            </span>
-            <span className="sm:hidden">
-              {pagination.pageIndex * pagination.pageSize + 1}-
-              {Math.min(
-                (pagination.pageIndex + 1) * pagination.pageSize,
-                totalCount
-              )}{" "}
-              of {totalCount}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-6 order-1 sm:order-2">
-            <div className="flex items-center space-x-2">
-              <p className="text-xs sm:text-sm font-medium hidden sm:block">Rows per page</p>
-              <p className="text-xs font-medium sm:hidden">Rows</p>
-              <Select
-                value={isAllSelected ? "All" : pagination.pageSize.toString()}
-                onValueChange={changePageSize}
-              >
-                <SelectTrigger className="h-8 w-[60px] sm:w-[70px] cursor-pointer text-xs sm:text-sm">
-                  <SelectValue placeholder={pagination.pageSize.toString()} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {pageSizeOptions.map((pageSize) => (
-                    <SelectItem key={pageSize} value={pageSize.toString()} className="cursor-pointer">
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {showPagination && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-2">
+            <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
+              <span className="hidden sm:inline">
+                Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
+                {Math.min(
+                  (pagination.pageIndex + 1) * pagination.pageSize,
+                  totalCount
+                )}{" "}
+                of {totalCount} results
+              </span>
+              <span className="sm:hidden">
+                {pagination.pageIndex * pagination.pageSize + 1}-
+                {Math.min(
+                  (pagination.pageIndex + 1) * pagination.pageSize,
+                  totalCount
+                )}{" "}
+                of {totalCount}
+              </span>
             </div>
 
-            <div className="flex items-center space-x-1 sm:space-x-2">
-              <div className="hidden sm:flex w-[100px] items-center justify-center text-sm font-medium">
-                Page {pagination.pageIndex + 1} of {Math.max(1, totalPages)}
+            <div className="flex items-center gap-3 sm:gap-6 order-1 sm:order-2">
+              <div className="flex items-center space-x-2">
+                <p className="text-xs sm:text-sm font-medium hidden sm:block">Rows per page</p>
+                <p className="text-xs font-medium sm:hidden">Rows</p>
+                <Select
+                  value={isAllSelected ? "All" : pagination.pageSize.toString()}
+                  onValueChange={changePageSize}
+                >
+                  <SelectTrigger className="h-8 w-[60px] sm:w-[70px] cursor-pointer text-xs sm:text-sm">
+                    <SelectValue placeholder={pagination.pageSize.toString()} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {pageSizeOptions.map((pageSize) => (
+                      <SelectItem key={pageSize} value={pageSize.toString()} className="cursor-pointer">
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="sm:hidden text-xs font-medium">
-                {pagination.pageIndex + 1}/{Math.max(1, totalPages)}
-              </div>
-              <div className="flex items-center space-x-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(0)}
-                  disabled={!hasPrevPage}
-                  className="h-8 w-8 p-0 cursor-pointer"
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(pagination.pageIndex - 1)}
-                  disabled={!hasPrevPage}
-                  className="h-8 w-8 p-0 cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(pagination.pageIndex + 1)}
-                  disabled={!hasNextPage}
-                  className="h-8 w-8 p-0 cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(totalPages - 1)}
-                  disabled={!hasNextPage}
-                  className="h-8 w-8 p-0 cursor-pointer"
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
+
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="hidden sm:flex w-[100px] items-center justify-center text-sm font-medium">
+                  Page {pagination.pageIndex + 1} of {Math.max(1, totalPages)}
+                </div>
+                <div className="sm:hidden text-xs font-medium">
+                  {pagination.pageIndex + 1}/{Math.max(1, totalPages)}
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(0)}
+                    disabled={!hasPrevPage}
+                    className="h-8 w-8 p-0 cursor-pointer"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(pagination.pageIndex - 1)}
+                    disabled={!hasPrevPage}
+                    className="h-8 w-8 p-0 cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(pagination.pageIndex + 1)}
+                    disabled={!hasNextPage}
+                    className="h-8 w-8 p-0 cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(totalPages - 1)}
+                    disabled={!hasNextPage}
+                    className="h-8 w-8 p-0 cursor-pointer"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     ),
   };
 }
+
+export const useCustomTable = CustomTableServerSidePagination;

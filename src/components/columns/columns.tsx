@@ -16,6 +16,7 @@ import {
   Student,
   Supervisor,
   TripReport,
+  Incident,
 } from "@/interface/modal";
 import { CellContent } from "@/components/ui/CustomTable";
 import { Eye, EyeOff, Locate, Music, WifiOff, Copy, Check } from "lucide-react";
@@ -1957,3 +1958,244 @@ export const GetGeofenceDetailColumns =
     { header: "Radius (m)", accessorKey: "radius" },
   ];
 
+export const getIncidentColumns = (
+  onEdit?: (incident: Incident) => void,
+  onUpdateStatus?: (incident: Incident) => void
+): ColumnDef<Incident>[] => [
+  {
+    accessorKey: "region",
+    header: "Region",
+    meta: {
+      wrapConfig: { minWidth: "140px", wrap: "wrap" },
+    },
+    cell: ({ row }) => (
+      <div className="text-center w-full min-w-[140px] whitespace-normal break-words">
+        {row.original.region || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "branchName",
+    header: "User Name",
+    meta: {
+      wrapConfig: { minWidth: "180px", wrap: "wrap" },
+    },
+    cell: ({ row }) => (
+      <div className="text-center w-full min-w-[180px] whitespace-normal break-words">
+        {row.original.branchName || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    meta: {
+      wrapConfig: { minWidth: "140px", wrap: "wrap" },
+    },
+    cell: ({ row }) => (
+      <div className="text-center w-full min-w-[140px] whitespace-normal break-words">
+        {row.original.category || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "subCategory",
+    header: "Sub Category",
+    meta: {
+      wrapConfig: { minWidth: "160px", wrap: "wrap" },
+    },
+    cell: ({ row }) => (
+      <div className="text-center w-full min-w-[160px] whitespace-normal break-words">
+        {row.original.subCategory || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "severity",
+    header: "Severity",
+    meta: {
+      wrapConfig: { minWidth: "120px", wrap: "nowrap" },
+    },
+    cell: ({ row }) => {
+      const severity = row.original.severity || "Low";
+      const colors: Record<string, string> = {
+        Low: "bg-blue-100 text-blue-800 border-blue-200",
+        low: "bg-blue-100 text-blue-800 border-blue-200",
+        Medium: "bg-amber-100 text-amber-800 border-amber-200",
+        medium: "bg-amber-100 text-amber-800 border-amber-200",
+        High: "bg-orange-100 text-orange-800 border-orange-200",
+        high: "bg-orange-100 text-orange-800 border-orange-200",
+        Critical: "bg-red-100 text-red-800 border-red-200",
+        critical: "bg-red-100 text-red-800 border-red-200",
+      };
+      const badgeStyle = colors[severity] || "bg-gray-100 text-gray-800 border-gray-200";
+      return (
+        <div className="text-center w-full min-w-[120px]">
+          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${badgeStyle}`}>
+            {severity}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    meta: {
+      wrapConfig: { minWidth: "140px", wrap: "nowrap" },
+    },
+    cell: ({ row }) => {
+      const status = row.original.status || "";
+      const statusLower = status.toLowerCase();
+
+      let colorStyle = "bg-gray-100 text-gray-700 border border-gray-200";
+      if (statusLower === "open") {
+        colorStyle = "bg-green-100 text-green-700 border border-green-200";
+      } else if (statusLower === "in-progress" || statusLower === "in progress") {
+        colorStyle = "bg-blue-100 text-blue-700 border border-blue-200";
+      } else if (statusLower === "resolved") {
+        colorStyle = "bg-purple-100 text-purple-700 border border-purple-200";
+      } else if (statusLower === "closed" || statusLower === "close") {
+        colorStyle = "bg-gray-100 text-gray-700 border border-gray-200";
+      }
+
+      return (
+        <div className="text-center w-full min-w-[140px]">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-block ${colorStyle}`}
+          >
+            {status || "N/A"}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    meta: {
+      wrapConfig: { minWidth: "190px", wrap: "nowrap" },
+    },
+    cell: ({ row }) => {
+      const status = row.original.status;
+      return (
+        <div className="flex justify-center items-center gap-2 w-full text-center whitespace-nowrap min-w-[190px]">
+          {status === "Open" ? (
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100 cursor-pointer"
+                onClick={() => onEdit?.(row.original)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100 cursor-pointer"
+                onClick={() => onUpdateStatus?.(row.original)}
+              >
+                Update Status
+              </Button>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground self-center text-center">
+              No action needed
+            </span>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "date",
+    header: "Date",
+    meta: {
+      wrapConfig: { minWidth: "160px", wrap: "nowrap" },
+    },
+    cell: ({ row }) => {
+      const date = row.original.date;
+      if (!date) return <div className="text-center w-full">N/A</div>;
+      return (
+        <div className="text-center w-full min-w-[160px]">
+          <span className="font-medium text-gray-700 whitespace-nowrap">
+            {new Date(date).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "UTC",
+              hour12: true,
+            })}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "briefDescription",
+    header: "Brief Description",
+    meta: {
+      wrapConfig: {
+        minWidth: "450px",
+        maxWidth: "750px",
+        wrap: "wrap",
+      },
+    },
+    cell: ({ row }) => (
+      <div className="min-w-[450px] max-w-[750px] text-left mx-auto whitespace-normal break-words leading-relaxed px-2">
+        {row.original.briefDescription || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "immediateActionTaken",
+    header: "Immediate Action Taken",
+    meta: {
+      wrapConfig: {
+        minWidth: "450px",
+        maxWidth: "750px",
+        wrap: "wrap",
+      },
+    },
+    cell: ({ row }) => (
+      <div className="min-w-[450px] max-w-[750px] text-left mx-auto whitespace-normal break-words leading-relaxed px-2">
+        {row.original.immediateActionTaken || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "pendingAction",
+    header: "Pending Action",
+    meta: {
+      wrapConfig: {
+        minWidth: "350px",
+        maxWidth: "600px",
+        wrap: "wrap",
+      },
+    },
+    cell: ({ row }) => (
+      <div className="min-w-[350px] max-w-[600px] text-left mx-auto whitespace-normal break-words leading-relaxed px-2">
+        {row.original.pendingAction || "N/A"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "remarks",
+    header: "Remarks",
+    meta: {
+      wrapConfig: {
+        minWidth: "350px",
+        maxWidth: "600px",
+        wrap: "wrap",
+      },
+    },
+    cell: ({ row }) => (
+      <div className="min-w-[350px] max-w-[600px] text-left mx-auto whitespace-normal break-words leading-relaxed px-2">
+        {row.original.remarks || "N/A"}
+      </div>
+    ),
+  },
+];
