@@ -742,8 +742,8 @@ export const AiChatBot: React.FC = () => {
       {isOpen && (
         <div
           className={`fixed z-50 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 ${isExpanded
-              ? "bottom-4 right-4 w-[92vw] md:w-[750px] h-[88vh]"
-              : "bottom-6 right-6 w-[94vw] sm:w-[460px] h-[640px] max-h-[85vh]"
+            ? "bottom-4 right-4 w-[92vw] md:w-[750px] h-[88vh]"
+            : "bottom-6 right-6 w-[94vw] sm:w-[460px] h-[640px] max-h-[85vh]"
             }`}
         >
           {/* Header */}
@@ -823,8 +823,8 @@ export const AiChatBot: React.FC = () => {
                 {/* Message Bubble */}
                 <div
                   className={`max-w-[92%] rounded-2xl p-3.5 text-sm shadow-xs ${msg.sender === "user"
-                      ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-zinc-950 font-medium rounded-tr-xs shadow-xs"
-                      : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 rounded-tl-xs"
+                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-zinc-950 font-medium rounded-tr-xs shadow-xs"
+                    : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 rounded-tl-xs"
                     }`}
                 >
                   {/* Loading Spinner */}
