@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Driver } from "@/interface/modal";
 import {
   useSchoolDropdown,
@@ -28,6 +28,7 @@ interface Props {
   initialData?: Driver | null;
   isCreating?: boolean;
   isUpdating?: boolean;
+  errorMessage?: string | null;
   decodedToken?: {
     role: string;
     schoolId?: string;
@@ -42,6 +43,7 @@ export default function AddDriverForm({
   initialData,
   isCreating,
   isUpdating,
+  errorMessage,
   decodedToken,
 }: Props) {
   // ---------------- Form State ----------------
@@ -262,6 +264,13 @@ export default function AddDriverForm({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-md flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {/* Personal Info Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div>

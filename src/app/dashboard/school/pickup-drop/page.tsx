@@ -38,17 +38,23 @@ interface PickupDrop {
 const formatDateTime = (dateString: string): string => {
   if (!dateString || dateString === "1970-01-01T00:00:00.000Z") return "-";
   try {
-    const date = new Date(dateString);
+    let str = String(dateString).trim();
+    if (str.includes("T") && !str.endsWith("Z") && !str.includes("+") && !str.includes("-", 10)) {
+      str += "Z";
+    }
+    const date = new Date(str);
     if (isNaN(date.getTime())) return "-";
     const formattedDate = date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+      timeZone: "UTC",
     });
     const formattedTime = date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
+      timeZone: "UTC",
     });
     return `${formattedDate}, ${formattedTime}`;
   } catch (error) {

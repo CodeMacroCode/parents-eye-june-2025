@@ -35,6 +35,7 @@ type Filters = {
 export default function Driver() {
   const [showForm, setShowForm] = useState(false);
   const [editingDriver, setEditingDriver] = useState<any>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   // ---------------- Pagination & Sorting ----------------
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -189,12 +190,15 @@ export default function Driver() {
 
   const handleEdit = useCallback((row: any) => {
     setEditingDriver(row);
+    setFormError(null);
     setShowForm(true);
   }, []);
 
   const handleFormSubmit = useCallback(
     async (data: any) => {
-      if (editingDriver) {
+      setFormError(null);
+
+      if (data?.routeObjId && data.routeObjId !== "") {
         try {
           const check = await driverService.checkAlreadyAssign(data.routeObjId);
 
@@ -204,34 +208,54 @@ export default function Driver() {
             );
             if (!userConfirmed) return;
           }
-          updateDriver({ id: editingDriver._id, payload: data });
         } catch (err: any) {
-          toast.error(err?.message || "Update failed");
-        }
-      } else {
-        console.log("[Create Driver]", data);
-        if (data.routeObjId === "") {
-          createDriver(data);
-        } else {
-          try {
-            const check = await driverService.checkAlreadyAssign(
-              data?.routeObjId
-            );
-
-            if (check?.assigned) {
-              const userConfirmed = confirm(
-                `${check.message}. Do you still want to continue?`
-              );
-              if (!userConfirmed) return;
-            }
-            createDriver(data);
-          } catch (err: any) {
-            toast.error(err?.message || "Create failed");
-          }
+          const errorMsg =
+            err?.response?.data?.message ||
+            err?.response?.data?.error ||
+            err?.message ||
+            "Route assignment check failed";
+          setFormError(errorMsg);
+          toast.error(errorMsg);
+          return;
         }
       }
-      setShowForm(false);
-      setEditingDriver(null);
+
+      if (editingDriver) {
+        updateDriver(
+          { id: editingDriver._id, payload: data },
+          {
+            onSuccess: () => {
+              setShowForm(false);
+              setEditingDriver(null);
+              setFormError(null);
+            },
+            onError: (err: any) => {
+              const errorMsg =
+                err?.response?.data?.message ||
+                err?.response?.data?.error ||
+                err?.message ||
+                "Update failed";
+              setFormError(errorMsg);
+            },
+          }
+        );
+      } else {
+        createDriver(data, {
+          onSuccess: () => {
+            setShowForm(false);
+            setEditingDriver(null);
+            setFormError(null);
+          },
+          onError: (err: any) => {
+            const errorMsg =
+              err?.response?.data?.message ||
+              err?.response?.data?.error ||
+              err?.message ||
+              "Create failed";
+            setFormError(errorMsg);
+          },
+        });
+      }
     },
     [editingDriver, updateDriver, createDriver]
   );
@@ -239,6 +263,7 @@ export default function Driver() {
   const handleFormClose = useCallback(() => {
     setShowForm(false);
     setEditingDriver(null);
+    setFormError(null);
   }, []);
 
   // ---------------- Clear Filters ----------------
@@ -464,7 +489,11 @@ export default function Driver() {
         {/*Add Driver*/}
         <div className="flex items-center justify-between">
           <Button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditingDriver(null);
+              setFormError(null);
+              setShowForm(true);
+            }}
             className="mb-3 cursor-pointer"
           >
             Add Driver
@@ -484,7 +513,13 @@ export default function Driver() {
       <div className="flex-1 min-h-0 mb-3 pb-3">{tableElement}</div>
 
       {showForm && (
-        <Dialog open={showForm} onOpenChange={setShowForm}>
+        <Dialog
+          open={showForm}
+          onOpenChange={(open) => {
+            if (!open) handleFormClose();
+            else setShowForm(true);
+          }}
+        >
           <DialogContent className="p-0 max-w-[700px] w-full">
             <AddDriverForm
               onSubmit={handleFormSubmit}
@@ -492,6 +527,7 @@ export default function Driver() {
               initialData={editingDriver}
               isCreating={isCreateDriver}
               isUpdating={isUpdateDriver}
+              errorMessage={formError}
               decodedToken={decodedToken}
             />
           </DialogContent>

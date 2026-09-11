@@ -56,7 +56,12 @@ export const useDriver = (
       queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Create failed");
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Create failed";
+      toast.error(message);
     },
   });
 
@@ -68,7 +73,12 @@ export const useDriver = (
       queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Update failed");
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Update failed";
+      toast.error(message);
     },
   });
 
@@ -79,7 +89,12 @@ export const useDriver = (
       queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Delete failed");
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Delete failed";
+      toast.error(message);
     },
   });
 
@@ -96,7 +111,12 @@ export const useDriver = (
       queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Approve failed");
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Approve failed";
+      toast.error(message);
     },
   });
 
