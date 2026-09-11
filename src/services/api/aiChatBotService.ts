@@ -5,7 +5,6 @@ import { routeService } from "@/services/api/routeService";
 import { geofenceService } from "@/services/api/geofenceSerevice";
 import { subscriptionExpiryService } from "@/services/api/subscriptionExpiry";
 import { formatDateToYYYYMMDD } from "@/util/formatDate";
-import { reverseGeocodeMapTiler } from "@/hooks/useReverseGeocoding";
 
 export interface ChatField {
   name: string;
@@ -51,34 +50,17 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
     question: "Distance report of all vehicles",
     intent: "distance_report",
     function: "get_all_vehicles_distance_report",
-    fields: [
-      {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
-      },
-    ],
   },
   {
-    id: 103,
-    question: "Travel summary of all vehicles",
-    intent: "all_vehicles_travel_summary",
-    function: "get_all_vehicles_travel_summary",
+    id: 122085011,
+    question: "Show specific vehicle Today distance ",
+    intent: "specific_vehicle_distance_report",
+    function: "get_specific_distance_report",
     fields: [
       {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
+        name: "vehicle_input",
+        label: "Enter Vehicle Name or Unique ID",
+        placeholder: "MH05GA1153",
       },
     ],
   },
@@ -110,6 +92,12 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
     ],
   },
   {
+    id: 1720,
+    question: "Show geofence reports",
+    intent: "geofencereports",
+    function: "get_all_geofence_reports",
+  },
+  {
     id: 1220282009,
     question: "Show specific stopped vehicle",
     intent: "specific_stopped_vehicle",
@@ -119,16 +107,6 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
         name: "vehicle_input",
         label: "Enter Vehicle Name or Unique ID",
         placeholder: "MH05GA1153",
-      },
-      {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
       },
     ],
   },
@@ -143,16 +121,6 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
         label: "Enter Vehicle Name or Unique ID",
         placeholder: "MH05GA1153",
       },
-      {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
-      },
     ],
   },
   {
@@ -165,16 +133,6 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
         name: "vehicle_input",
         label: "Enter Vehicle Name or Unique ID",
         placeholder: "MH05GA1153",
-      },
-      {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
       },
     ],
   },
@@ -189,16 +147,6 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
         label: "Enter Vehicle Name or Unique ID",
         placeholder: "MH05GA1153",
       },
-      {
-        name: "from_date",
-        label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
-      },
-      {
-        name: "to_date",
-        label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
-      },
     ],
   },
   {
@@ -212,15 +160,28 @@ export const HARDCODED_QUESTIONS: ChatQuestion[] = [
         label: "Enter Vehicle Name or Unique ID",
         placeholder: "MH05GA1153",
       },
+    ],
+  },
+  {
+    id: 122080135,
+    question: "Show vehicle travel summary by date range",
+    intent: "vehicle_travel_summary_date_range",
+    function: "get_travel_summary_by_date_range",
+    fields: [
+      {
+        name: "vehicle_input",
+        label: "Enter Vehicle Name or Unique ID",
+        placeholder: "MH05GA1153",
+      },
       {
         name: "from_date",
         label: "Enter Start Date",
-        placeholder: "e.g. 01-09-2026 or 1 Sept 2026",
+        placeholder: "4 July 2026",
       },
       {
         name: "to_date",
         label: "Enter End Date",
-        placeholder: "e.g. 10-09-2026 or 10 Sept 2026",
+        placeholder: "9 July 2026",
       },
     ],
   },
@@ -389,18 +350,10 @@ export const executeChatbotFunction = async (
 
       // Distance report of all vehicles
       case "get_all_vehicles_distance_report": {
-        const fromDate = parseInputDate(fieldValues.from_date);
-        const toDate = parseInputDate(fieldValues.to_date);
-        let start = fromDate;
-        let end = toDate;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
         const devices = await getCachedDevices();
         if (!devices || devices.length === 0) {
           return {
-            title: `Distance Report: All Vehicles (${start} to ${end})`,
+            title: "Distance Report (All Vehicles)",
             type: "empty",
             summary: "No vehicles found in the system.",
             count: 0,
@@ -417,152 +370,74 @@ export const executeChatbotFunction = async (
             uniqueIds,
             page: 1,
             limit: "all",
-            period: "Custom",
-            from: start,
-            to: end,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
           });
           const rawData = res?.data ?? res ?? [];
-          rows = Array.isArray(rawData)
-            ? rawData
-            : Array.isArray(rawData?.data)
-            ? rawData.data
-            : [];
+          rows = Array.isArray(rawData) ? rawData : (Array.isArray(rawData?.data) ? rawData.data : []);
         } catch (err) {
           console.error("Failed to fetch distance report for all vehicles:", err);
         }
 
-        // Collect all date keys returned by backend across all rows (like distance-report/page.tsx)
-        const nonDateKeys = new Set([
-          "_id",
-          "id",
-          "name",
-          "uniqueId",
-          "totalKm",
-          "sim",
-          "status",
-          "speed",
-          "branch",
-          "branchId",
-          "branchName",
-          "message",
-        ]);
-
-        const dateKeySet = new Set<string>();
-        if (Array.isArray(rows)) {
-          rows.forEach((r: any) => {
-            Object.keys(r).forEach((k) => {
-              if (!nonDateKeys.has(k) && !k.startsWith("_")) {
-                dateKeySet.add(k);
-              }
-            });
-          });
-        }
-        const dateKeys = Array.from(dateKeySet).sort();
-
         // Create lookup map for distance records by uniqueId and vehicle name
-        const rowsByUniqueId = new Map<string, any>();
+        const distanceMap = new Map<string, any>();
         if (Array.isArray(rows)) {
           rows.forEach((r: any) => {
             if (r.uniqueId != null) {
-              rowsByUniqueId.set(String(r.uniqueId), r);
+              distanceMap.set(String(r.uniqueId), r);
             }
             if (r.name) {
-              rowsByUniqueId.set(String(r.name).toLowerCase().trim(), r);
+              distanceMap.set(String(r.name).toLowerCase().trim(), r);
             }
           });
         }
 
-        // Map every vehicle with its date columns, totalKm, and metadata matching distance-report/page.tsx
-        const allDistanceData: any[] = devices.map((d) => {
-          const row =
-            rowsByUniqueId.get(String(d.uniqueId)) ||
-            rowsByUniqueId.get(String(d.deviceName || "").toLowerCase().trim()) ||
-            rowsByUniqueId.get(String(d.name || "").toLowerCase().trim()) ||
-            {};
+        // Map every vehicle with its distance and metadata
+        const allDistanceData = devices.map((d) => {
+          const dist =
+            distanceMap.get(String(d.uniqueId)) ||
+            distanceMap.get(String(d.deviceName || "").toLowerCase().trim()) ||
+            distanceMap.get(String(d.name || "").toLowerCase().trim());
 
-          const vehicleName = d.deviceName || d.name || row.name || `Vehicle ${d.uniqueId}`;
-          const sim = d.sim || d.phone || d.simNumber || d.simNo || "--";
-          const rawTotal = row.totalKm ?? row.distance ?? 0;
-          const numTotal =
-            typeof rawTotal === "number" ? rawTotal : parseFloat(String(rawTotal)) || 0;
+          const rawKm = dist?.totalKm ?? dist?.distance ?? 0;
+          const numKm = typeof rawKm === "number" ? rawKm : parseFloat(String(rawKm)) || 0;
 
-          const item: Record<string, any> = {
-            name: vehicleName,
+          return {
+            name: d.deviceName || d.name || "Unnamed Vehicle",
             uniqueId: d.uniqueId || "--",
-            sim: sim,
+            sim: d.sim || d.phone || d.simNumber || d.simNo || "--",
+            totalKm: `${numKm.toFixed(2)} km`,
+            _numKm: numKm,
+            status: d.status || "offline",
+            speed: `${d.speed ?? 0} km/h`,
+            branch: d.branchId?.branchName || d.branchName || "--",
           };
-
-          // Populate each date column exactly as distance-report/page.tsx does
-          dateKeys.forEach((dk) => {
-            const val = row[dk];
-            if (val !== undefined && val !== null) {
-              const numVal =
-                typeof val === "number" ? val : parseFloat(String(val)) || 0;
-              item[dk] = `${numVal.toFixed(2)} km`;
-            } else {
-              item[dk] = "0.00 km";
-            }
-          });
-
-          item.totalKm = `${numTotal.toFixed(2)} km`;
-          item._numTotal = numTotal;
-
-          return item;
         });
 
-        // Also include any vehicle rows returned from backend that weren't in devices list
-        if (Array.isArray(rows)) {
-          rows.forEach((r: any) => {
-            const uId = r.uniqueId != null ? String(r.uniqueId) : null;
-            if (uId && !devices.some((d) => String(d.uniqueId) === uId)) {
-              const rawTotal = r.totalKm ?? r.distance ?? 0;
-              const numTotal =
-                typeof rawTotal === "number" ? rawTotal : parseFloat(String(rawTotal)) || 0;
-              const item: Record<string, any> = {
-                name: r.name || `Vehicle ${uId}`,
-                uniqueId: uId,
-                sim: "--",
-              };
-              dateKeys.forEach((dk) => {
-                const val = r[dk];
-                const numVal =
-                  typeof val === "number" ? val : parseFloat(String(val)) || 0;
-                item[dk] = `${numVal.toFixed(2)} km`;
-              });
-              item.totalKm = `${numTotal.toFixed(2)} km`;
-              item._numTotal = numTotal;
-              allDistanceData.push(item);
-            }
-          });
-        }
-
         // Sort vehicles by distance traveled descending
-        allDistanceData.sort((a, b) => b._numTotal - a._numTotal);
+        allDistanceData.sort((a, b) => b._numKm - a._numKm);
 
         // Remove temporary sorting helper
-        const cleanedData = allDistanceData.map(({ _numTotal, ...rest }) => rest);
+        const cleanedData = allDistanceData.map(({ _numKm, ...rest }) => rest);
 
-        const totalFleetKm = allDistanceData.reduce((acc, r) => acc + r._numTotal, 0);
-        const movingCount = allDistanceData.filter((r) => r._numTotal > 0).length;
-
-        // Build columns matching prepareDistanceExport from distance-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle Name" },
-          { key: "uniqueId", label: "Unique ID" },
-          { key: "sim", label: "SIM Number" },
-          ...dateKeys.map((dk) => ({
-            key: dk,
-            label: dk,
-          })),
-          { key: "totalKm", label: "Total KM" },
-        ];
+        const totalFleetKm = allDistanceData.reduce((acc, r) => acc + r._numKm, 0);
+        const movingCount = allDistanceData.filter((r) => r._numKm > 0).length;
 
         return {
-          title: `Distance Report: All Vehicles (${start} to ${end})`,
+          title: `Distance Report - All Vehicles (${todayStr})`,
           type: "table",
           count: cleanedData.length,
-          summary: `Distance report from ${start} to ${end}. Found ${cleanedData.length} vehicles. Total fleet distance: ${totalFleetKm.toFixed(2)} km across ${movingCount} active vehicles.`,
-          columns,
+          summary: `Found ${cleanedData.length} vehicles. Fleet distance today: ${totalFleetKm.toFixed(2)} km across ${movingCount} active vehicles.`,
+          columns: [
+            { key: "name", label: "Vehicle" },
+            { key: "uniqueId", label: "Unique ID" },
+            { key: "sim", label: "SIM Number" },
+            { key: "totalKm", label: "Today Distance" },
+            { key: "status", label: "Status" },
+            { key: "speed", label: "Speed" },
+            { key: "branch", label: "Branch" },
+          ],
           data: cleanedData.slice(0, 50),
           allData: cleanedData,
         };
@@ -843,6 +718,7 @@ export const executeChatbotFunction = async (
           summary: `Vehicle ${device?.deviceName || uniqueId} covered ${totalKm} km today (${todayStr}).`,
           badges: [
             { label: "Distance Today", value: `${totalKm} KM`, color: "blue" },
+            { label: "Status", value: device?.status || "Active", color: "green" },
           ],
           data: [
             {
@@ -1122,170 +998,15 @@ export const executeChatbotFunction = async (
         };
       }
 
-      // 15b. Stop report of all vehicles
-      case "get_all_vehicles_stop_report": {
-        const fromDate = parseInputDate(fieldValues.from_date);
-        const toDate = parseInputDate(fieldValues.to_date);
-        let start = fromDate || todayStr;
-        let end = toDate || todayStr;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
-        const devices = await getCachedDevices();
-        if (!devices || devices.length === 0) {
-          return {
-            title: `All Vehicles Stop Report (${start} to ${end})`,
-            type: "empty",
-            summary: "No vehicles found in the system.",
-            count: 0,
-          };
-        }
-
-        const results = await Promise.all(
-          devices.map(async (d: any) => {
-            try {
-              const res = await reportService.getStopReport({
-                uniqueId: d.uniqueId,
-                page: 1,
-                limit: "all",
-                period: "Custom",
-                from: start,
-                to: end,
-              });
-              const raw = res?.data?.data ?? res?.data?.stopArray ?? res?.data ?? res?.stopArray ?? (Array.isArray(res) ? res : []);
-              return (Array.isArray(raw) ? raw : []).map((r: any) => ({
-                ...r,
-                name: d.deviceName || d.name || r.name || String(d.uniqueId),
-              }));
-            } catch {
-              return [];
-            }
-          })
-        );
-        const stopRows = results.flat();
-
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching stop-report/page.tsx
-        const enrichedRows = await Promise.all(
-          stopRows.map(async (row: any) => {
-            const lat = row.latitude ?? row.lat;
-            const lng = row.longitude ?? row.lng;
-            const location =
-              row.location && row.location !== "--" && row.location.length > 5
-                ? row.location
-                : lat && lng
-                ? await reverseGeocodeMapTiler(Number(lat), Number(lng)).catch(() => `${lat}, ${lng}`)
-                : row.location || row.address || "--";
-
-            return {
-              ...row,
-              location,
-            };
-          })
-        );
-
-        // Format data matching prepareExportData & enrichStopReportWithAddress in stop-report/page.tsx
-        const allStopData = enrichedRows.map((r: any) => {
-          const arrival = new Date(r.arrivalTime || r.startTime || r.startDateTime).getTime();
-          const departure = new Date(r.departureTime || r.endTime || r.endDateTime).getTime();
-
-          let haltTime = r.haltTime || r.time || r.duration;
-          if (!haltTime && arrival && departure) {
-            const diffMs = Math.max(departure - arrival, 0);
-            const hours = Math.floor(diffMs / 3600000);
-            const minutes = Math.floor((diffMs % 3600000) / 60000);
-            const seconds = Math.floor((diffMs % 60000) / 1000);
-            haltTime = `${hours}H ${minutes}M ${seconds}S`;
-          }
-
-          const arrivalTime = r.arrivalTime || r.startTime
-            ? new Date(r.arrivalTime || r.startTime).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              })
-            : "--";
-
-          const departureTime = r.departureTime || r.endTime
-            ? new Date(r.departureTime || r.endTime).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              })
-            : "--";
-
-          const coordinates = r.latitude && r.longitude ? `${r.latitude}, ${r.longitude}` : r.coordinates || "--";
-
-          return {
-            name: r.name || "--",
-            arrivalTime,
-            departureTime,
-            haltTime: haltTime || "--",
-            location: r.location || "--",
-            coordinates,
-          };
-        });
-
-        // Columns matching exportColumns from stop-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "arrivalTime", label: "Start Time" },
-          { key: "departureTime", label: "End Time" },
-          { key: "haltTime", label: "Duration" },
-          { key: "location", label: "Location" },
-          { key: "coordinates", label: "Coordinates" },
-        ];
-
-        return {
-          title: `All Vehicles Stop Report (${start} to ${end})`,
-          type: "table",
-          count: allStopData.length,
-          summary: `Showing ${allStopData.length} stopped records across all vehicles from ${start} to ${end}.`,
-          badges: [
-            { label: "Total Stops", value: allStopData.length },
-            { label: "Date Range", value: `${start} to ${end}` },
-            { label: "Total Vehicles", value: devices.length },
-          ],
-          columns,
-          data: allStopData.slice(0, 50),
-          allData: allStopData,
-        };
-      }
-
       // 16. Show specific stopped vehicle
       case "get_specific_stopped_vehicle": {
-        const inputStr = fieldValues.vehicle_input?.trim().toLowerCase();
-        if (!inputStr || inputStr === "all" || inputStr === "all vehicles" || inputStr === "all devices" || inputStr === "every vehicle") {
-          return executeChatbotFunction("get_all_vehicles_stop_report", fieldValues);
-        }
-
         const { uniqueId, device } = await resolveVehicle(fieldValues.vehicle_input);
         if (!uniqueId) {
           return {
-            title: "Vehicle Stop Report",
+            title: "Stopped Vehicle Details",
             type: "empty",
             summary: `Vehicle "${fieldValues.vehicle_input}" not found.`,
           };
-        }
-
-        const fromDate = fieldValues.from_date
-          ? parseInputDate(fieldValues.from_date)
-          : todayStr;
-        const toDate = fieldValues.to_date
-          ? parseInputDate(fieldValues.to_date)
-          : todayStr;
-        let start = fromDate;
-        let end = toDate;
-        if (start > end) {
-          [start, end] = [end, start];
         }
 
         let stopRecords: any[] = [];
@@ -1294,120 +1015,45 @@ export const executeChatbotFunction = async (
             uniqueId,
             page: 1,
             limit: "all",
-            period: start === end && start === todayStr ? "Today" : "Custom",
-            from: start,
-            to: end,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
           });
-          const raw = res?.data?.data ?? res?.data?.stopArray ?? res?.data ?? res?.stopArray ?? res ?? [];
-          stopRecords = Array.isArray(raw) ? raw : [];
-        } catch (err) {
-          console.error("Failed to fetch stop report:", err);
+          stopRecords = res?.data ?? res ?? [];
+        } catch {
+          // Fallback to device stop state
         }
 
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching stop-report/page.tsx
-        const enrichedRows = await Promise.all(
-          stopRecords.map(async (row: any) => {
-            const lat = row.latitude ?? row.lat;
-            const lng = row.longitude ?? row.lng;
-            const location =
-              row.location && row.location !== "--" && row.location.length > 5
-                ? row.location
-                : lat && lng
-                ? await reverseGeocodeMapTiler(Number(lat), Number(lng)).catch(() => `${lat}, ${lng}`)
-                : row.location || row.address || "--";
-
-            return {
-              ...row,
-              location,
-            };
-          })
-        );
-
-        const vehicleName = device?.deviceName || device?.name || `Vehicle ${uniqueId}`;
-
-        // Format data matching prepareExportData & enrichStopReportWithAddress in stop-report/page.tsx
-        const allStopData = enrichedRows.length > 0
-          ? enrichedRows.map((r: any) => {
-              const arrival = new Date(r.arrivalTime || r.startTime || r.startDateTime).getTime();
-              const departure = new Date(r.departureTime || r.endTime || r.endDateTime).getTime();
-
-              let haltTime = r.haltTime || r.time || r.duration;
-              if (!haltTime && arrival && departure) {
-                const diffMs = Math.max(departure - arrival, 0);
-                const hours = Math.floor(diffMs / 3600000);
-                const minutes = Math.floor((diffMs % 3600000) / 60000);
-                const seconds = Math.floor((diffMs % 60000) / 1000);
-                haltTime = `${hours}H ${minutes}M ${seconds}S`;
-              }
-
-              const arrivalTime = r.arrivalTime || r.startTime
-                ? new Date(r.arrivalTime || r.startTime).toLocaleString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                  })
-                : "--";
-
-              const departureTime = r.departureTime || r.endTime
-                ? new Date(r.departureTime || r.endTime).toLocaleString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                  })
-                : "--";
-
-              const coordinates = r.latitude && r.longitude ? `${r.latitude}, ${r.longitude}` : r.coordinates || "--";
-
-              return {
-                name: r.name || vehicleName,
-                arrivalTime,
-                departureTime,
-                haltTime: haltTime || "--",
-                location: r.location || "--",
-                coordinates,
-              };
-            })
+        const isStopped = device?.status === "stopped";
+        const allStopData = stopRecords.length > 0
+          ? stopRecords.map((s: any, idx: number) => ({
+              "Stop #": idx + 1,
+              "Start Time": s.startTime ? new Date(s.startTime).toLocaleTimeString() : "--",
+              "End Time": s.endTime ? new Date(s.endTime).toLocaleTimeString() : "--",
+              "Duration": s.duration || s.totalDuration || "--",
+              "Location": s.address || s.location || "--",
+            }))
           : [
               {
-                name: vehicleName,
-                arrivalTime: `${start} Live`,
-                departureTime: "Now",
-                haltTime: "--",
-                location: "--",
-                coordinates: "--",
+                "Vehicle": device?.deviceName || uniqueId,
+                "SIM Number": device?.sim || device?.phone || device?.simNumber || device?.simNo || "--",
+                "Current Status": device?.status || "stopped",
+                "Ignition": device?.ignition ? "ON" : "OFF",
+                "Last Stopped Location": device?.address || "--",
               },
             ];
 
-        // Columns matching exportColumns from stop-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "arrivalTime", label: "Start Time" },
-          { key: "departureTime", label: "End Time" },
-          { key: "haltTime", label: "Duration" },
-          { key: "location", label: "Location" },
-          { key: "coordinates", label: "Coordinates" },
-        ];
-
         return {
-          title: `Vehicle Stop Report: ${vehicleName} (${start} to ${end})`,
-          type: "table",
-          count: stopRecords.length,
-          summary: `Showing stopped records from ${start} to ${end} for ${vehicleName}. Found ${stopRecords.length} stops.`,
+          title: `Stop Report: ${device?.deviceName || uniqueId}`,
+          type: "cards",
+          summary: isStopped
+            ? `Vehicle ${device?.deviceName || uniqueId} is currently STOPPED.`
+            : `Vehicle ${device?.deviceName || uniqueId} has recorded ${stopRecords.length} stops today.`,
           badges: [
-            { label: "Vehicle No", value: vehicleName },
-            { label: "Date Range", value: `${start} to ${end}` },
-            { label: "Stops Count", value: stopRecords.length },
+            { label: "Current State", value: device?.status || "stopped", color: isStopped ? "red" : "blue" },
+            { label: "Stops Today", value: stopRecords.length },
           ],
-          columns,
-          data: allStopData.slice(0, 50),
+          data: allStopData.slice(0, 5),
           allData: allStopData,
         };
       }
@@ -1423,502 +1069,112 @@ export const executeChatbotFunction = async (
           };
         }
 
-        const fromDate = fieldValues.from_date
-          ? parseInputDate(fieldValues.from_date)
-          : todayStr;
-        const toDate = fieldValues.to_date
-          ? parseInputDate(fieldValues.to_date)
-          : todayStr;
-        let start = fromDate;
-        let end = toDate;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
         let statusData: any[] = [];
         try {
           const res = await reportService.getStatusReport({
             uniqueId,
             page: 1,
             limit: "all",
-            period: start === end && start === todayStr ? "Today" : "Custom",
-            from: start,
-            to: end,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
           });
-          const raw = res?.data ?? res ?? [];
-          statusData = Array.isArray(raw)
-            ? raw
-            : Array.isArray(raw?.data)
-            ? raw.data
-            : [];
-        } catch (err) {
-          console.error("Failed to fetch status report:", err);
+          statusData = res?.data ?? res ?? [];
+        } catch {
+          // Fallback
         }
 
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching status-report/page.tsx
-        const enrichedRows = await Promise.all(
-          statusData.map(async (row: any) => {
-            const startLat = row.startCoordinate?.latitude ?? row.startLatitude;
-            const startLng = row.startCoordinate?.longitude ?? row.startLongitude;
-            const endLat = row.endCoordinate?.latitude ?? row.endLatitude;
-            const endLng = row.endCoordinate?.longitude ?? row.endLongitude;
-
-            const [startLocation, endLocation] = await Promise.all([
-              row.startLocation && row.startLocation !== "--" && row.startLocation.length > 5
-                ? row.startLocation
-                : startLat && startLng
-                ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
-                : row.startLocation || "--",
-              row.endLocation && row.endLocation !== "--" && row.endLocation.length > 5
-                ? row.endLocation
-                : endLat && endLng
-                ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
-                : row.endLocation || "--",
-            ]);
-
-            return {
-              ...row,
-              startLocation,
-              endLocation,
-            };
-          })
-        );
-
-        const vehicleName = device?.deviceName || device?.name || `Vehicle ${uniqueId}`;
-
-        // Format data exactly like prepareExportData in status-report/page.tsx
-        const allStatusRows = enrichedRows.length > 0
-          ? enrichedRows.map((item: any) => {
-              const startTime = item.startDateTime
-                ? new Date(item.startDateTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : item.startTime || "--";
-
-              const endTime = item.endDateTime
-                ? new Date(item.endDateTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : item.endTime || "--";
-
-              const distance =
-                item.distance != null
-                  ? typeof item.distance === "number"
-                    ? (item.distance / 1000).toFixed(2)
-                    : item.distance
-                  : "0.00";
-
-              const startCoordinates = item.startCoordinate?.latitude
-                ? `${item.startCoordinate.latitude}, ${item.startCoordinate.longitude}`
-                : item.startCoordinates || "--";
-
-              const endCoordinates = item.endCoordinate?.latitude
-                ? `${item.endCoordinate.latitude}, ${item.endCoordinate.longitude}`
-                : item.endCoordinates || "--";
-
-              return {
-                name: item.name || vehicleName,
-                vehicleStatus: item.vehicleStatus || item.status || "--",
-                startTime,
-                startLocation: item.startLocation || "--",
-                startCoordinates,
-                time: item.time || item.duration || "--",
-                distance,
-                maxSpeed: item.maxSpeed != null ? `${item.maxSpeed}` : "--",
-                endTime,
-                endLocation: item.endLocation || "--",
-                endCoordinates,
-              };
-            })
+        const allStatusRows = statusData.length > 0
+          ? statusData.map((st: any) => ({
+              status: st.status || "--",
+              startTime: st.startTime ? new Date(st.startTime).toLocaleTimeString() : "--",
+              endTime: st.endTime ? new Date(st.endTime).toLocaleTimeString() : "--",
+              duration: st.duration || "--",
+            }))
           : [
               {
-                name: vehicleName,
-                vehicleStatus: device?.status || "online",
-                startTime: `${start} Live`,
-                startLocation: "--",
-                startCoordinates: "--",
-                time: "--",
-                distance: "0.00",
-                maxSpeed: "--",
+                status: device?.status || "online",
+                startTime: "Live",
                 endTime: "Now",
-                endLocation: "--",
-                endCoordinates: "--",
+                duration: "--",
               },
             ];
 
-        // Export columns exactly matching status-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "vehicleStatus", label: "Status" },
-          { key: "startTime", label: "Start Time" },
-          { key: "startLocation", label: "Start Location" },
-          { key: "startCoordinates", label: "Start Coordinates" },
-          { key: "time", label: "Duration" },
-          { key: "distance", label: "Distance (KM)" },
-          { key: "maxSpeed", label: "Max Speed (KM/H)" },
-          { key: "endTime", label: "End Time" },
-          { key: "endLocation", label: "End Location" },
-          { key: "endCoordinates", label: "End Coordinates" },
-        ];
-
         return {
-          title: `Vehicle Status Report: ${vehicleName} (${start} to ${end})`,
+          title: `Status Report: ${device?.deviceName || uniqueId}`,
           type: "table",
           count: statusData.length,
-          summary: `Showing status timeline records from ${start} to ${end} for ${vehicleName}. Found ${statusData.length} records.`,
+          summary: `Showing status timeline records for today.`,
           badges: [
-            { label: "Vehicle No", value: vehicleName },
-            { label: "Date Range", value: `${start} to ${end}` },
+            { label: "Live Status", value: device?.status || "online", color: "green" },
             { label: "Events Recorded", value: statusData.length },
           ],
-          columns,
+          columns: [
+            { key: "status", label: "Status" },
+            { key: "startTime", label: "Start Time" },
+            { key: "endTime", label: "End Time" },
+            { key: "duration", label: "Duration" },
+          ],
           data: allStatusRows.slice(0, 50),
           allData: allStatusRows,
         };
       }
 
-      // 17b. Trip report of all vehicles
-      case "get_all_vehicles_trip_report": {
-        const fromDate = parseInputDate(fieldValues.from_date);
-        const toDate = parseInputDate(fieldValues.to_date);
-        let start = fromDate || todayStr;
-        let end = toDate || todayStr;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
-        const devices = await getCachedDevices();
-        if (!devices || devices.length === 0) {
-          return {
-            title: `All Vehicles Trip Report (${start} to ${end})`,
-            type: "empty",
-            summary: "No vehicles found in the system.",
-            count: 0,
-          };
-        }
-
-        const results = await Promise.all(
-          devices.map(async (d: any) => {
-            try {
-              const res = await reportService.getTripReport({
-                uniqueId: d.uniqueId,
-                page: 1,
-                limit: "all",
-                period: start === end && start === todayStr ? "Today" : "Custom",
-                from: start,
-                to: end,
-              });
-              const raw = res?.data?.data ?? res?.data ?? res?.trips ?? (Array.isArray(res) ? res : []);
-              return (Array.isArray(raw) ? raw : []).map((r: any) => ({
-                ...r,
-                name: d.deviceName || d.name || r.name || String(d.uniqueId),
-              }));
-            } catch {
-              return [];
-            }
-          })
-        );
-        const tripRows = results.flat();
-
-        const isCoord = (addr?: string) => !addr || addr === "-" || addr === "--" || /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(addr.trim());
-
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching trip-report/page.tsx
-        const enrichedRows = await Promise.all(
-          tripRows.map(async (row: any) => {
-            let startAddress = row.startAddress || "-";
-            let endAddress = row.endAddress || "-";
-
-            if (isCoord(startAddress) && row.startLatitude && row.startLongitude) {
-              startAddress = await reverseGeocodeMapTiler(
-                Number(row.startLatitude),
-                Number(row.startLongitude)
-              ).catch(() => `${row.startLatitude}, ${row.startLongitude}`) || "-";
-            }
-
-            if (isCoord(endAddress) && row.endLatitude && row.endLongitude) {
-              endAddress = await reverseGeocodeMapTiler(
-                Number(row.endLatitude),
-                Number(row.endLongitude)
-              ).catch(() => `${row.endLatitude}, ${row.endLongitude}`) || "-";
-            }
-
-            return {
-              ...row,
-              startAddress,
-              endAddress,
-            };
-          })
-        );
-
-        // Format data exactly matching prepareExportData in trip-report/page.tsx
-        const allTripData = enrichedRows.map((item: any) => {
-          const startTime = item.startTime
-            ? new Date(item.startTime).toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-                timeZone: "UTC",
-              })
-            : "--";
-
-          const endTime = item.endTime
-            ? new Date(item.endTime).toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-                timeZone: "UTC",
-              })
-            : "--";
-
-          const startCoordinates = item.startLatitude && item.startLongitude ? `${item.startLatitude}, ${item.startLongitude}` : item.startCoordinates || "--";
-          const endCoordinates = item.endLatitude && item.endLongitude ? `${item.endLatitude}, ${item.endLongitude}` : item.endCoordinates || "--";
-          const distanceNum = typeof item.distance === "string"
-            ? parseFloat(item.distance)
-            : Number(item.distance);
-          const distance = !isNaN(distanceNum) ? distanceNum.toFixed(2) : "0.00";
-          const maxSpeed = item.maxSpeed != null ? `${item.maxSpeed} km/h` : "0 km/h";
-
-          return {
-            name: item.name || "--",
-            startTime,
-            startAddress: item.startAddress || "-",
-            startCoordinates,
-            endTime,
-            endAddress: item.endAddress || "-",
-            endCoordinates,
-            duration: item.duration || "--",
-            distance,
-            maxSpeed,
-            startLatitude: item.startLatitude,
-            startLongitude: item.startLongitude,
-            endLatitude: item.endLatitude,
-            endLongitude: item.endLongitude,
-          };
-        });
-
-        // Columns matching exportColumns from trip-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "startTime", label: "Start Time" },
-          { key: "startAddress", label: "Start Address" },
-          { key: "startCoordinates", label: "Start Coordinates" },
-          { key: "endTime", label: "End Time" },
-          { key: "endAddress", label: "End Address" },
-          { key: "endCoordinates", label: "End Coordinates" },
-          { key: "duration", label: "Duration" },
-          { key: "distance", label: "Distance (KM)" },
-          { key: "maxSpeed", label: "Max Speed" },
-        ];
-
-        return {
-          title: `All Vehicles Trip Report (${start} to ${end})`,
-          type: "table",
-          count: allTripData.length,
-          summary: `Showing ${allTripData.length} trip records across all vehicles from ${start} to ${end}.`,
-          badges: [
-            { label: "Total Trips", value: allTripData.length },
-            { label: "Date Range", value: `${start} to ${end}` },
-          ],
-          columns,
-          data: allTripData.slice(0, 50),
-          allData: allTripData,
-        };
-      }
-
       // 18. Show specific vehicle trip report
       case "get_specific_trip_report": {
-        const inputStr = fieldValues.vehicle_input?.trim().toLowerCase();
-        if (!inputStr || inputStr === "all" || inputStr === "all vehicles" || inputStr === "all devices" || inputStr === "every vehicle") {
-          return executeChatbotFunction("get_all_vehicles_trip_report", fieldValues);
-        }
-
         const { uniqueId, device } = await resolveVehicle(fieldValues.vehicle_input);
         if (!uniqueId) {
           return {
-            title: "Vehicle Trip Report",
+            title: "Trip Report",
             type: "empty",
             summary: `Vehicle "${fieldValues.vehicle_input}" not found.`,
           };
-        }
-
-        const fromDate = fieldValues.from_date
-          ? parseInputDate(fieldValues.from_date)
-          : todayStr;
-        const toDate = fieldValues.to_date
-          ? parseInputDate(fieldValues.to_date)
-          : todayStr;
-        let start = fromDate;
-        let end = toDate;
-        if (start > end) {
-          [start, end] = [end, start];
         }
 
         let trips: any[] = [];
         try {
           const res = await reportService.getTripReport({
             uniqueId,
-            page: 1,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
             limit: "all",
-            period: start === end && start === todayStr ? "Today" : "Custom",
-            from: start,
-            to: end,
           });
-          const raw = res?.data?.data ?? res?.data ?? res?.trips ?? (Array.isArray(res) ? res : []);
-          trips = Array.isArray(raw) ? raw : [];
-        } catch (err) {
-          console.error("Failed to fetch trip report:", err);
+          trips = res?.data ?? res ?? [];
+        } catch {
+          // Fallback
         }
 
-        const isCoord = (addr?: string) => !addr || addr === "-" || addr === "--" || /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(addr.trim());
+        if (!trips.length) {
+          return {
+            title: `Trip Report: ${device?.deviceName || uniqueId}`,
+            type: "empty",
+            summary: `No completed trips recorded today for vehicle ${device?.deviceName || uniqueId}.`,
+          };
+        }
 
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching trip-report/page.tsx
-        const enrichedRows = await Promise.all(
-          trips.map(async (row: any) => {
-            let startAddress = row.startAddress || "-";
-            let endAddress = row.endAddress || "-";
-
-            if (isCoord(startAddress) && row.startLatitude && row.startLongitude) {
-              startAddress = await reverseGeocodeMapTiler(
-                Number(row.startLatitude),
-                Number(row.startLongitude)
-              ).catch(() => `${row.startLatitude}, ${row.startLongitude}`) || "-";
-            }
-
-            if (isCoord(endAddress) && row.endLatitude && row.endLongitude) {
-              endAddress = await reverseGeocodeMapTiler(
-                Number(row.endLatitude),
-                Number(row.endLongitude)
-              ).catch(() => `${row.endLatitude}, ${row.endLongitude}`) || "-";
-            }
-
-            return {
-              ...row,
-              startAddress,
-              endAddress,
-            };
-          })
-        );
-
-        const vehicleName = device?.deviceName || device?.name || `Vehicle ${uniqueId}`;
-
-        // Format data exactly like prepareExportData in trip-report/page.tsx
-        const allTripData = enrichedRows.length > 0
-          ? enrichedRows.map((item: any) => {
-              const startTime = item.startTime
-                ? new Date(item.startTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : "--";
-
-              const endTime = item.endTime
-                ? new Date(item.endTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : "--";
-
-              const startCoordinates = item.startLatitude && item.startLongitude ? `${item.startLatitude}, ${item.startLongitude}` : item.startCoordinates || "--";
-              const endCoordinates = item.endLatitude && item.endLongitude ? `${item.endLatitude}, ${item.endLongitude}` : item.endCoordinates || "--";
-              const distanceNum = typeof item.distance === "string"
-                ? parseFloat(item.distance)
-                : Number(item.distance);
-              const distance = !isNaN(distanceNum) ? distanceNum.toFixed(2) : "0.00";
-              const maxSpeed = item.maxSpeed != null ? `${item.maxSpeed} km/h` : "0 km/h";
-
-              return {
-                name: item.name || vehicleName,
-                startTime,
-                startAddress: item.startAddress || "-",
-                startCoordinates,
-                endTime,
-                endAddress: item.endAddress || "-",
-                endCoordinates,
-                duration: item.duration || "--",
-                distance,
-                maxSpeed,
-                startLatitude: item.startLatitude,
-                startLongitude: item.startLongitude,
-                endLatitude: item.endLatitude,
-                endLongitude: item.endLongitude,
-              };
-            })
-          : [
-              {
-                name: vehicleName,
-                startTime: `${start} Live`,
-                startAddress: "--",
-                startCoordinates: "--",
-                endTime: "Now",
-                endAddress: "--",
-                endCoordinates: "--",
-                duration: "--",
-                distance: "0.00",
-                maxSpeed: "0 km/h",
-              },
-            ];
-
-        // Columns matching exportColumns from trip-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "startTime", label: "Start Time" },
-          { key: "startAddress", label: "Start Address" },
-          { key: "startCoordinates", label: "Start Coordinates" },
-          { key: "endTime", label: "End Time" },
-          { key: "endAddress", label: "End Address" },
-          { key: "endCoordinates", label: "End Coordinates" },
-          { key: "duration", label: "Duration" },
-          { key: "distance", label: "Distance (KM)" },
-          { key: "maxSpeed", label: "Max Speed" },
-        ];
+        const allTripRows = trips.map((t: any) => ({
+          start: t.startTime ? new Date(t.startTime).toLocaleTimeString() : "--",
+          end: t.endTime ? new Date(t.endTime).toLocaleTimeString() : "--",
+          distance: `${t.distance ?? 0} km`,
+          duration: t.duration || "--",
+          maxSpeed: `${t.maxSpeed ?? 0} km/h`,
+        }));
 
         return {
-          title: `Vehicle Trip Report: ${vehicleName} (${start} to ${end})`,
+          title: `Trip Summary: ${device?.deviceName || uniqueId}`,
           type: "table",
           count: trips.length,
-          summary: `Showing trip records from ${start} to ${end} for ${vehicleName}. Found ${trips.length} trips.`,
-          badges: [
-            { label: "Vehicle No", value: vehicleName },
-            { label: "Date Range", value: `${start} to ${end}` },
-            { label: "Total Trips", value: trips.length },
+          summary: `Found ${trips.length} trip(s) today.`,
+          columns: [
+            { key: "start", label: "Start Time" },
+            { key: "end", label: "End Time" },
+            { key: "distance", label: "Distance" },
+            { key: "duration", label: "Duration" },
+            { key: "maxSpeed", label: "Max Speed" },
           ],
-          columns,
-          data: allTripData.slice(0, 50),
-          allData: allTripData,
+          data: allTripRows.slice(0, 50),
+          allData: allTripRows,
         };
       }
 
@@ -1933,502 +1189,159 @@ export const executeChatbotFunction = async (
           };
         }
 
-        const fromDate = fieldValues.from_date
-          ? parseInputDate(fieldValues.from_date)
-          : todayStr;
-        const toDate = fieldValues.to_date
-          ? parseInputDate(fieldValues.to_date)
-          : todayStr;
-        let start = fromDate;
-        let end = toDate;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
         let idleRows: any[] = [];
         try {
           const res = await reportService.getIdleReport({
             uniqueId,
             page: 1,
             limit: "all",
-            period: start === end && start === todayStr ? "Today" : "Custom",
-            from: start,
-            to: end,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
           });
-          const raw = res?.data?.idleArray ?? res?.idleArray ?? res?.data ?? res ?? [];
-          idleRows = Array.isArray(raw) ? raw : [];
-        } catch (err) {
-          console.error("Failed to fetch idle report:", err);
+          idleRows = res?.data ?? res ?? [];
+        } catch {
+          // Fallback
         }
 
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching idle-report/page.tsx
-        const enrichedRows = await Promise.all(
-          idleRows.map(async (row: any) => {
-            const lat = row.latitude ?? row.lat;
-            const lng = row.longitude ?? row.lng;
-            const location =
-              row.location && row.location !== "--" && row.location.length > 5
-                ? row.location
-                : lat && lng
-                ? await reverseGeocodeMapTiler(Number(lat), Number(lng)).catch(() => `${lat}, ${lng}`)
-                : row.location || row.address || "--";
-
-            return {
-              ...row,
-              location,
-            };
-          })
-        );
-
-        const vehicleName = device?.deviceName || device?.name || `Vehicle ${uniqueId}`;
-
-        // Format data exactly like prepareExportData & enrichIdleReportWithAddress in idle-report/page.tsx
-        const allIdleData = enrichedRows.length > 0
-          ? enrichedRows.map((r: any) => {
-              const arrival = new Date(r.idleStartTime || r.startDateTime || r.startTime).getTime();
-              const departure = new Date(r.idleEndTime || r.endDateTime || r.endTime).getTime();
-
-              let haltTime = r.haltTime || r.time || r.duration;
-              if (!haltTime && arrival && departure) {
-                const diffMs = Math.max(departure - arrival, 0);
-                const hours = Math.floor(diffMs / 3600000);
-                const minutes = Math.floor((diffMs % 3600000) / 60000);
-                const seconds = Math.floor((diffMs % 60000) / 1000);
-                haltTime = `${hours}H ${minutes}M ${seconds}S`;
-              }
-
-              const arrivalTime = r.idleStartTime || r.startDateTime || r.startTime
-                ? new Date(r.idleStartTime || r.startDateTime || r.startTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : "--";
-
-              const departureTime = r.idleEndTime || r.endDateTime || r.endTime
-                ? new Date(r.idleEndTime || r.endDateTime || r.endTime).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                  })
-                : "--";
-
-              const coordinates = r.latitude && r.longitude ? `${r.latitude}, ${r.longitude}` : r.coordinates || "--";
-
-              return {
-                name: r.name || vehicleName,
-                arrivalTime,
-                departureTime,
-                haltTime: haltTime || "--",
-                location: r.location || "--",
-                coordinates,
-              };
-            })
+        const allIdleData = idleRows.length > 0
+          ? idleRows.map((r: any) => ({
+              startTime: r.startTime ? new Date(r.startTime).toLocaleTimeString() : "--",
+              endTime: r.endTime ? new Date(r.endTime).toLocaleTimeString() : "--",
+              duration: r.duration || "--",
+              location: r.address || r.location || "--",
+            }))
           : [
               {
-                name: vehicleName,
-                arrivalTime: `${start} Live`,
-                departureTime: "Now",
-                haltTime: "--",
-                location: "--",
-                coordinates: "--",
+                "Vehicle": device?.deviceName || uniqueId,
+                "Status": "Normal / Not idling",
+                "Ignition": device?.ignition ? "ON" : "OFF",
               },
             ];
 
-        // Columns matching exportColumns from idle-report/page.tsx
-        const columns = [
-          { key: "name", label: "Vehicle No" },
-          { key: "arrivalTime", label: "Start Time" },
-          { key: "departureTime", label: "End Time" },
-          { key: "haltTime", label: "Duration" },
-          { key: "location", label: "Location" },
-          { key: "coordinates", label: "Coordinates" },
-        ];
-
         return {
-          title: `Vehicle Idle Report: ${vehicleName} (${start} to ${end})`,
-          type: "table",
+          title: `Idle Report: ${device?.deviceName || uniqueId}`,
+          type: idleRows.length > 0 ? "table" : "cards",
           count: idleRows.length,
-          summary: `Showing idle records from ${start} to ${end} for ${vehicleName}. Found ${idleRows.length} idle periods.`,
+          summary: idleRows.length > 0
+            ? `Vehicle experienced ${idleRows.length} idle periods today.`
+            : `No idle periods logged today for ${device?.deviceName || uniqueId}.`,
           badges: [
-            { label: "Vehicle No", value: vehicleName },
-            { label: "Date Range", value: `${start} to ${end}` },
             { label: "Idle Count", value: idleRows.length },
+            { label: "Current Status", value: device?.status || "--" },
           ],
-          columns,
+          columns: [
+            { key: "startTime", label: "Started" },
+            { key: "endTime", label: "Ended" },
+            { key: "duration", label: "Duration" },
+            { key: "location", label: "Location" },
+          ],
           data: allIdleData.slice(0, 50),
           allData: allIdleData,
         };
       }
 
-      // 19b. Travel summary of all vehicles
-      case "get_all_vehicles_travel_summary": {
-        const fromDate = parseInputDate(fieldValues.from_date);
-        const toDate = parseInputDate(fieldValues.to_date);
-        let start = fromDate || todayStr;
-        let end = toDate || todayStr;
-        if (start > end) {
-          [start, end] = [end, start];
-        }
-
-        const devices = await getCachedDevices();
-        if (!devices || devices.length === 0) {
-          return {
-            title: `All Vehicles Travel Summary (${start} to ${end})`,
-            type: "empty",
-            summary: "No vehicles found in the system.",
-            count: 0,
-          };
-        }
-
-        const uniqueIds = devices
-          .map((d: any) => Number(d.uniqueId))
-          .filter((id: number) => !isNaN(id) && id > 0);
-
-        const deviceByUniqueId = new Map<string, any>();
-        devices.forEach((d: any) => {
-          if (d.uniqueId != null) {
-            deviceByUniqueId.set(String(d.uniqueId), d);
-          }
-        });
-
-        let travelRows: any[] = [];
-        try {
-          const res = await reportService.getTravelSummaryReport({
-            uniqueIds,
-            page: 1,
-            limit: "all",
-            period: "Custom",
-            from: start,
-            to: end,
-          });
-          const raw = res?.reportData ?? res?.data?.reportData ?? res?.data ?? res ?? [];
-          travelRows = Array.isArray(raw) ? raw : (raw && typeof raw === "object" ? [raw] : []);
-        } catch (err) {
-          console.error("Failed to fetch travel summary for all vehicles:", err);
-        }
-
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching travel-summary/page.tsx
-        const enrichedRows = await Promise.all(
-          travelRows.map(async (row: any) => {
-            const resolvedUniqueId = row.uniqueId || row.dayWiseTrips?.[0]?.uniqueId;
-            const matchedDevice = resolvedUniqueId ? deviceByUniqueId.get(String(resolvedUniqueId)) : null;
-            const vName = matchedDevice?.deviceName || matchedDevice?.name || row.name || String(resolvedUniqueId || "-");
-
-            let startAddress = row.startAddress && row.startAddress !== "-" && row.startAddress !== "--" ? row.startAddress : "-";
-            let endAddress = row.endAddress && row.endAddress !== "-" && row.endAddress !== "--" ? row.endAddress : "-";
-
-            if ((!startAddress || startAddress === "-") && row.startLat && row.startLong) {
-              try {
-                const addr = await reverseGeocodeMapTiler(Number(row.startLat), Number(row.startLong));
-                if (addr) startAddress = addr;
-              } catch {
-                startAddress = `${row.startLat}, ${row.startLong}`;
-              }
-            }
-
-            if ((!endAddress || endAddress === "-") && row.endLat && row.endLong) {
-              try {
-                const addr = await reverseGeocodeMapTiler(Number(row.endLat), Number(row.endLong));
-                if (addr) endAddress = addr;
-              } catch {
-                endAddress = `${row.endLat}, ${row.endLong}`;
-              }
-            }
-
-            let enrichedDayWiseTrips = row.dayWiseTrips || [];
-            if (Array.isArray(row.dayWiseTrips) && row.dayWiseTrips.length > 0) {
-              enrichedDayWiseTrips = await Promise.all(
-                row.dayWiseTrips.map(async (trip: any) => {
-                  let tripStartAddress = trip.startAddress && trip.startAddress !== "-" && trip.startAddress !== "--" ? trip.startAddress : "-";
-                  let tripEndAddress = trip.endAddress && trip.endAddress !== "-" && trip.endAddress !== "--" ? trip.endAddress : "-";
-
-                  if ((!tripStartAddress || tripStartAddress === "-") && trip.startLatitude && trip.startLongitude) {
-                    try {
-                      const addr = await reverseGeocodeMapTiler(Number(trip.startLatitude), Number(trip.startLongitude));
-                      if (addr) tripStartAddress = addr;
-                    } catch {
-                      tripStartAddress = `${trip.startLatitude}, ${trip.startLongitude}`;
-                    }
-                  }
-
-                  if ((!tripEndAddress || tripEndAddress === "-") && trip.endLatitude && trip.endLongitude) {
-                    try {
-                      const addr = await reverseGeocodeMapTiler(Number(trip.endLatitude), Number(trip.endLongitude));
-                      if (addr) tripEndAddress = addr;
-                    } catch {
-                      tripEndAddress = `${trip.endLatitude}, ${trip.endLongitude}`;
-                    }
-                  }
-
-                  return {
-                    ...trip,
-                    startAddress: tripStartAddress,
-                    endAddress: tripEndAddress,
-                  };
-                })
-              );
-            }
-
-            return {
-              ...row,
-              vehicleName: vName,
-              startAddress,
-              endAddress,
-              dayWiseTrips: enrichedDayWiseTrips,
-            };
-          })
-        );
-
-        // Format data matching prepareExportData in travel-summary/page.tsx
-        const allTravelData = enrichedRows.map((item: any) => {
-          const vName = item.vehicleName || item.name || "-";
-          const distance = item.distance != null ? Number(item.distance).toFixed(2) : "0.00";
-          const maxSpeed = item.maxSpeed != null ? Number(item.maxSpeed).toFixed(2) : "0.00";
-          const avgSpeed = item.avgSpeed != null ? Number(item.avgSpeed).toFixed(2) : "0.00";
-
-          const startCoordinates = item.startLat && item.startLong
-            ? `${item.startLat}, ${item.startLong}`
-            : "-";
-          const endCoordinates = item.endLat && item.endLong
-            ? `${item.endLat}, ${item.endLong}`
-            : "-";
-
-          return {
-            ...item,
-            vehicleName: vName,
-            distance,
-            maxSpeed,
-            avgSpeed,
-            startCoordinates,
-            endCoordinates,
-            running: item.running || "0D, 0H, 0M, 0S",
-            idle: item.idle || "0D, 0H, 0M, 0S",
-            stop: item.stop || "0D, 0H, 0M, 0S",
-            workingHours: item.workingHours || "0D, 0H, 0M, 0S",
-            startAddress: item.startAddress || "-",
-            endAddress: item.endAddress || "-",
-          };
-        });
-
-        // Columns matching exportColumns from travel-summary/page.tsx
-        const columns = [
-          { key: "vehicleName", label: "Vehicle No" },
-          { key: "startAddress", label: "Start Address" },
-          { key: "startCoordinates", label: "Start Coordinates" },
-          { key: "distance", label: "Distance (KM)" },
-          { key: "running", label: "Running Time" },
-          { key: "idle", label: "Idle Time" },
-          { key: "stop", label: "Stop Time" },
-          { key: "workingHours", label: "Working Hours" },
-          { key: "maxSpeed", label: "Max Speed (KM/H)" },
-          { key: "avgSpeed", label: "Avg Speed (KM/H)" },
-          { key: "endAddress", label: "End Address" },
-          { key: "endCoordinates", label: "End Coordinates" },
-        ];
-
-        const totalFleetDistance = allTravelData
-          .reduce((acc, curr) => acc + (Number(curr.distance) || 0), 0)
-          .toFixed(2);
-        const activeVehicles = allTravelData.filter((d) => Number(d.distance) > 0).length;
-
-        return {
-          title: `All Vehicles Travel Summary (${start} to ${end})`,
-          type: "table",
-          count: allTravelData.length,
-          summary: `Travel summary for ${allTravelData.length} vehicles from ${start} to ${end}. Fleet total distance: ${totalFleetDistance} KM (${activeVehicles} active vehicles).`,
-          badges: [
-            { label: "Total Vehicles", value: allTravelData.length, color: "blue" },
-            { label: "Active Vehicles", value: activeVehicles, color: "green" },
-            { label: "Fleet Distance", value: `${totalFleetDistance} KM`, color: "purple" },
-          ],
-          columns,
-          data: allTravelData.slice(0, 50),
-          allData: allTravelData,
-        };
-      }
-
       // 20. Show specific vehicle travel summary
-      case "get_specific_travel_summary":
-      case "get_travel_summary_by_date_range": {
-        const inputStr = fieldValues.vehicle_input?.trim().toLowerCase();
-        if (!inputStr || inputStr === "all" || inputStr === "all vehicles" || inputStr === "all devices" || inputStr === "every vehicle") {
-          return executeChatbotFunction("get_all_vehicles_travel_summary", fieldValues);
-        }
-
+      case "get_specific_travel_summary": {
         const { uniqueId, device } = await resolveVehicle(fieldValues.vehicle_input);
         if (!uniqueId) {
           return {
-            title: "Travel Summary Report",
+            title: "Travel Summary",
             type: "empty",
             summary: `Vehicle "${fieldValues.vehicle_input}" not found.`,
           };
         }
 
-        const vehicleName = device?.deviceName || device?.name || String(uniqueId);
-        const start = parseInputDate(fieldValues.from_date) || todayStr;
-        const end = parseInputDate(fieldValues.to_date) || todayStr;
-
-        let travelRows: any[] = [];
+        let summaryData: any = null;
         try {
           const res = await reportService.getTravelSummaryReport({
-            uniqueIds: [Number(uniqueId)],
+            uniqueIds: [uniqueId],
             page: 1,
-            limit: "all",
-            period: "Custom",
-            from: start,
-            to: end,
+            limit: 10,
+            period: "Today",
+            from: todayStr,
+            to: todayStr,
           });
-          const raw = res?.reportData ?? res?.data?.reportData ?? res?.data ?? res ?? [];
-          travelRows = Array.isArray(raw) ? raw : (raw && typeof raw === "object" ? [raw] : []);
-        } catch (err) {
-          console.error("Failed to fetch travel summary report:", err);
+          const rows = res?.data ?? res ?? [];
+          summaryData = Array.isArray(rows) ? rows[0] : rows;
+        } catch {
+          // Fallback
         }
 
-        // Enrich rows with addresses using reverseGeocodeMapTiler matching travel-summary/page.tsx
-        const enrichedRows = await Promise.all(
-          travelRows.map(async (row: any) => {
-            let startAddress = row.startAddress && row.startAddress !== "-" && row.startAddress !== "--" ? row.startAddress : "-";
-            let endAddress = row.endAddress && row.endAddress !== "-" && row.endAddress !== "--" ? row.endAddress : "-";
+        return {
+          title: `Travel Summary: ${device?.deviceName || uniqueId}`,
+          type: "cards",
+          summary: `Summary of operation today (${todayStr}).`,
+          badges: [
+            { label: "Distance", value: `${summaryData?.distance ?? 0} KM`, color: "blue" },
+            { label: "Running Time", value: summaryData?.running || "--", color: "green" },
+            { label: "Max Speed", value: `${summaryData?.maxSpeed ?? 0} km/h` },
+          ],
+          data: [
+            {
+              "Vehicle Name": device?.deviceName || device?.name || uniqueId,
+              "Total Distance": `${summaryData?.distance ?? 0} km`,
+              "Running Duration": summaryData?.running || "--",
+              "Idle Duration": summaryData?.idle || "--",
+              "Stopped Duration": summaryData?.stopped || "--",
+              "Max Speed": `${summaryData?.maxSpeed ?? 0} km/h`,
+              "Average Speed": `${summaryData?.avgSpeed ?? 0} km/h`,
+              "Overspeed Count": summaryData?.overspeed || 0,
+            },
+          ],
+        };
+      }
 
-            if ((!startAddress || startAddress === "-") && row.startLat && row.startLong) {
-              try {
-                const addr = await reverseGeocodeMapTiler(Number(row.startLat), Number(row.startLong));
-                if (addr) startAddress = addr;
-              } catch {
-                startAddress = `${row.startLat}, ${row.startLong}`;
-              }
-            }
+      // 21. Show vehicle travel summary by date range
+      case "get_travel_summary_by_date_range": {
+        const { uniqueId, device } = await resolveVehicle(fieldValues.vehicle_input);
+        const fromDate = parseInputDate(fieldValues.from_date);
+        const toDate = parseInputDate(fieldValues.to_date);
 
-            if ((!endAddress || endAddress === "-") && row.endLat && row.endLong) {
-              try {
-                const addr = await reverseGeocodeMapTiler(Number(row.endLat), Number(row.endLong));
-                if (addr) endAddress = addr;
-              } catch {
-                endAddress = `${row.endLat}, ${row.endLong}`;
-              }
-            }
-
-            let enrichedDayWiseTrips = row.dayWiseTrips || [];
-            if (Array.isArray(row.dayWiseTrips) && row.dayWiseTrips.length > 0) {
-              enrichedDayWiseTrips = await Promise.all(
-                row.dayWiseTrips.map(async (trip: any) => {
-                  let tripStartAddress = trip.startAddress && trip.startAddress !== "-" && trip.startAddress !== "--" ? trip.startAddress : "-";
-                  let tripEndAddress = trip.endAddress && trip.endAddress !== "-" && trip.endAddress !== "--" ? trip.endAddress : "-";
-
-                  if ((!tripStartAddress || tripStartAddress === "-") && trip.startLatitude && trip.startLongitude) {
-                    try {
-                      const addr = await reverseGeocodeMapTiler(Number(trip.startLatitude), Number(trip.startLongitude));
-                      if (addr) tripStartAddress = addr;
-                    } catch {
-                      tripStartAddress = `${trip.startLatitude}, ${trip.startLongitude}`;
-                    }
-                  }
-
-                  if ((!tripEndAddress || tripEndAddress === "-") && trip.endLatitude && trip.endLongitude) {
-                    try {
-                      const addr = await reverseGeocodeMapTiler(Number(trip.endLatitude), Number(trip.endLongitude));
-                      if (addr) tripEndAddress = addr;
-                    } catch {
-                      tripEndAddress = `${trip.endLatitude}, ${trip.endLongitude}`;
-                    }
-                  }
-
-                  return {
-                    ...trip,
-                    startAddress: tripStartAddress,
-                    endAddress: tripEndAddress,
-                  };
-                })
-              );
-            }
-
-            return {
-              ...row,
-              startAddress,
-              endAddress,
-              dayWiseTrips: enrichedDayWiseTrips,
-            };
-          })
-        );
-
-        // Format data matching prepareExportData in travel-summary/page.tsx
-        const allTravelData = enrichedRows.map((item: any) => {
-          const vName = device?.deviceName || device?.name || item.name || vehicleName;
-          const distance = item.distance != null ? Number(item.distance).toFixed(2) : "0.00";
-          const maxSpeed = item.maxSpeed != null ? Number(item.maxSpeed).toFixed(2) : "0.00";
-          const avgSpeed = item.avgSpeed != null ? Number(item.avgSpeed).toFixed(2) : "0.00";
-
-          const startCoordinates = item.startLat && item.startLong
-            ? `${item.startLat}, ${item.startLong}`
-            : "-";
-          const endCoordinates = item.endLat && item.endLong
-            ? `${item.endLat}, ${item.endLong}`
-            : "-";
-
+        if (!uniqueId) {
           return {
-            ...item,
-            vehicleName: vName,
-            distance,
-            maxSpeed,
-            avgSpeed,
-            startCoordinates,
-            endCoordinates,
-            running: item.running || "0D, 0H, 0M, 0S",
-            idle: item.idle || "0D, 0H, 0M, 0S",
-            stop: item.stop || "0D, 0H, 0M, 0S",
-            workingHours: item.workingHours || "0D, 0H, 0M, 0S",
-            startAddress: item.startAddress || "-",
-            endAddress: item.endAddress || "-",
+            title: "Travel Summary by Range",
+            type: "empty",
+            summary: `Vehicle "${fieldValues.vehicle_input}" not found.`,
           };
-        });
+        }
 
-        // Columns matching exportColumns from travel-summary/page.tsx
-        const columns = [
-          { key: "vehicleName", label: "Vehicle No" },
-          { key: "startAddress", label: "Start Address" },
-          { key: "startCoordinates", label: "Start Coordinates" },
-          { key: "distance", label: "Distance (KM)" },
-          { key: "running", label: "Running Time" },
-          { key: "idle", label: "Idle Time" },
-          { key: "stop", label: "Stop Time" },
-          { key: "workingHours", label: "Working Hours" },
-          { key: "maxSpeed", label: "Max Speed (KM/H)" },
-          { key: "avgSpeed", label: "Avg Speed (KM/H)" },
-          { key: "endAddress", label: "End Address" },
-          { key: "endCoordinates", label: "End Coordinates" },
-        ];
-
-        const primaryRow = allTravelData[0];
-        const totalDistance = primaryRow?.distance ?? "0.00";
-        const runningTime = primaryRow?.running ?? "0D, 0H, 0M, 0S";
-        const idleTime = primaryRow?.idle ?? "0D, 0H, 0M, 0S";
-        const workingHours = primaryRow?.workingHours ?? "0D, 0H, 0M, 0S";
+        let rangeSummary: any = null;
+        try {
+          const res = await reportService.getTravelSummaryReport({
+            uniqueIds: [uniqueId],
+            page: 1,
+            limit: 10,
+            period: "Custom",
+            from: fromDate,
+            to: toDate,
+          });
+          const rows = res?.data ?? res ?? [];
+          rangeSummary = Array.isArray(rows) ? rows[0] : rows;
+        } catch {
+          // Fallback
+        }
 
         return {
-          title: `Vehicle Travel Summary: ${vehicleName} (${start} to ${end})`,
-          type: "table",
-          count: allTravelData.length,
-          summary: `Showing travel summary from ${start} to ${end} for ${vehicleName}. Total distance covered: ${totalDistance} KM with ${runningTime} running time.`,
+          title: `Travel Range (${fromDate} to ${toDate})`,
+          type: "cards",
+          summary: `Performance summary between ${fromDate} and ${toDate}.`,
           badges: [
-            { label: "Distance", value: `${totalDistance} KM`, color: "blue" },
-            { label: "Running Time", value: runningTime, color: "green" },
-            { label: "Idle Time", value: idleTime, color: "amber" },
-            { label: "Working Hours", value: workingHours, color: "purple" },
+            { label: "Distance", value: `${rangeSummary?.distance ?? 0} KM`, color: "blue" },
+            { label: "Max Speed", value: `${rangeSummary?.maxSpeed ?? 0} km/h` },
           ],
-          columns,
-          data: allTravelData.slice(0, 50),
-          allData: allTravelData,
+          data: [
+            {
+              "Vehicle": device?.deviceName || device?.name || uniqueId,
+              "Date Range": `${fromDate} - ${toDate}`,
+              "Total Distance": `${rangeSummary?.distance ?? 0} km`,
+              "Running Time": rangeSummary?.running || "--",
+              "Idle Time": rangeSummary?.idle || "--",
+              "Stopped Time": rangeSummary?.stopped || "--",
+              "Max Speed": `${rangeSummary?.maxSpeed ?? 0} km/h`,
+              "Avg Speed": `${rangeSummary?.avgSpeed ?? 0} km/h`,
+            },
+          ],
         };
       }
 
