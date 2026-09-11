@@ -474,7 +474,7 @@ export function AddDeviceForm({
             {/* Device Name */}
             <div className="space-y-2">
               <Label htmlFor="name">
-                Device Name <span className="text-red-500">*</span>
+                Vehicle Name <span className="text-red-500">*</span>
               </Label>
               <Controller
                 name="name"
@@ -483,7 +483,7 @@ export function AddDeviceForm({
                   <Input
                     {...field}
                     id="name"
-                    placeholder="Enter device name"
+                    placeholder="Enter vehicle name"
                     disabled={isLoading}
                   />
                 )}
@@ -819,7 +819,7 @@ export function AddDeviceForm({
                             {field.value ? (
                               formatDateForUI(field.value)
                             ) : (
-                              <span>Select subscription end date</span>
+                              <span>Select end date</span>
                             )}
                           </Button>
                         </PopoverTrigger>

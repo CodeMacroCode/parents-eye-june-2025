@@ -428,7 +428,7 @@ export const getDeviceColumns = (
   onDelete: (row: Device) => void
 ): ColumnDef<Device>[] => [
     {
-      header: "Device Name",
+      header: "Vehicle Name",
       accessorKey: "name",
     },
     {
