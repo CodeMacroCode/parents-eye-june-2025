@@ -60,7 +60,7 @@ export function Navbar() {
     "Reports",
     "Incident Management",
     "Maintenance",
-    "Basic Maintenance",
+    // "Basic Maintenance",
     "Support",
   ];
 
