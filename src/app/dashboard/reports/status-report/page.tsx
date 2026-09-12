@@ -251,7 +251,7 @@ const StatusReportPage: React.FC = () => {
       updateProgress(60, "Preparing report");
       const preparedData = await prepareExportData(exportData);
 
-      updateProgress(85, "Generating PDF");
+      updateProgress(85, "Generating Excel");
       exportToExcel(preparedData, exportColumns, {
         title: "Vehicle Status Report",
       });

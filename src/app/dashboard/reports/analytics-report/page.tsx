@@ -447,7 +447,7 @@ const AnalyticsReportPage: React.FC = () => {
           totalKm: formatDistanceDisplay(row.totalKm),
         };
         Object.keys(row).forEach((k) => {
-          if (!["name", "totalKm", "uniqueId", "_id", "id"].includes(k)) {
+          if (!["name", "totalKm", "uniqueId", "_id", "id", "branch", "branchId", "branchName", "message", "status"].includes(k) && !k.startsWith("_")) {
             formattedRow[k] = formatDistanceDisplay(row[k]);
           }
         });
@@ -554,7 +554,7 @@ const AnalyticsReportPage: React.FC = () => {
       }
 
       const dateKeys = Object.keys(sampleRow)
-        .filter((k) => !["name", "totalKm", "uniqueId", "id", "_id"].includes(k))
+        .filter((k) => !["name", "totalKm", "uniqueId", "id", "_id", "branch", "branchId", "branchName", "message", "status"].includes(k) && !k.startsWith("_"))
         .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
       const distCols = [
@@ -842,8 +842,20 @@ const AnalyticsReportPage: React.FC = () => {
     if (!rows.length) return { data: [], columns: [] };
 
     const sample = rows[0];
+    const excludedKeys = new Set([
+      "name",
+      "totalKm",
+      "uniqueId",
+      "_id",
+      "id",
+      "branch",
+      "branchId",
+      "branchName",
+      "message",
+      "status",
+    ]);
     const dateKeys = Object.keys(sample)
-      .filter((k) => !["name", "totalKm", "uniqueId", "_id", "id"].includes(k))
+      .filter((k) => !excludedKeys.has(k) && !k.startsWith("_"))
       .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
     const deviceMap = new Map<string, string>();
@@ -856,8 +868,15 @@ const AnalyticsReportPage: React.FC = () => {
     const formattedRows = rows.map((row: any) => {
       const mappedName =
         deviceMap.get(String(row.uniqueId)) ?? row.name ?? `Vehicle ${row.uniqueId || ""}`;
+      const copy = { ...row };
+      delete copy.branch;
+      delete copy.branchId;
+      delete copy.branchName;
+      delete copy.message;
+      delete copy.status;
+
       const out: any = {
-        ...row,
+        ...copy,
         name: mappedName,
         totalKm: formatDistanceDisplay(row.totalKm),
       };

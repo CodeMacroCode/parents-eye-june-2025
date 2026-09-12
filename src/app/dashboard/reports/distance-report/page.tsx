@@ -139,8 +139,21 @@ const DistanceReportPage: React.FC = () => {
     if (!rows.length) return { data: [], columns: [] };
 
     const sample = rows[0];
+    const excludedKeys = new Set([
+      "name",
+      "totalKm",
+      "uniqueId",
+      "_id",
+      "id",
+      "branch",
+      "branchId",
+      "branchName",
+      "message",
+      "status",
+    ]);
+
     const dateKeys = Object.keys(sample).filter(
-      (k) => !["name", "totalKm"].includes(k)
+      (k) => !excludedKeys.has(k) && !k.startsWith("_")
     );
 
     const columns = [
@@ -162,7 +175,17 @@ const DistanceReportPage: React.FC = () => {
       },
     ];
 
-    return { data: rows, columns };
+    const cleanedData = rows.map((row) => {
+      const copy = { ...row };
+      delete copy.branch;
+      delete copy.branchId;
+      delete copy.branchName;
+      delete copy.message;
+      delete copy.status;
+      return copy;
+    });
+
+    return { data: cleanedData, columns };
   };
 
 
@@ -187,9 +210,10 @@ const DistanceReportPage: React.FC = () => {
       updateProgress(40, "Preparing report");
       const { data, columns } = prepareDistanceExport(rawData);
       
-      // remove uniqueId from pdf
+      // remove uniqueId, branch, message, status from pdf
+      const excludedKeys = new Set(["uniqueId", "branch", "branchname", "branchid", "message", "status"]);
       const pdfColumns = columns.filter(
-        (col) => col.key !== "uniqueId"
+        (col) => !excludedKeys.has(col.key.toLowerCase().replace(/[^a-z]/g, ""))
       );
       updateProgress(75, "Generating PDF");
       await exportToPDF(data, pdfColumns, {
@@ -228,9 +252,13 @@ const DistanceReportPage: React.FC = () => {
 
       updateProgress(60, "Resolving locations");
       const { data, columns } = prepareDistanceExport(exportData);
+      const excludedKeys = new Set(["branch", "branchname", "branchid", "message", "status"]);
+      const excelColumns = columns.filter(
+        (col) => !excludedKeys.has(col.key.toLowerCase().replace(/[^a-z]/g, ""))
+      );
 
       updateProgress(85, "Generating Excel");
-      exportToExcel(data, columns, {
+      exportToExcel(data, excelColumns, {
         title: "Vehicle Distance Report",
       });
       updateProgress(100, "Download complete");
@@ -271,8 +299,20 @@ const DistanceReportPage: React.FC = () => {
     }
 
     const rawRow = distanceReport[0];
+    const excludedKeys = new Set([
+      "name",
+      "totalKm",
+      "uniqueId",
+      "_id",
+      "id",
+      "branch",
+      "branchId",
+      "branchName",
+      "message",
+      "status",
+    ]);
     const dateKeys = Object.keys(rawRow).filter(
-      (k) => !["name", "totalKm"].includes(k)
+      (k) => !excludedKeys.has(k) && !k.startsWith("_")
     );
 
     const newColumns = [
