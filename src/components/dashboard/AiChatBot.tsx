@@ -106,7 +106,7 @@ export const AiChatBot: React.FC = () => {
         {
           id: "welcome",
           sender: "bot",
-          text: "👋 Hello! I am parentseye.ai, your intelligent fleet assistant. You can ask me anything about vehicle statuses, live KM reports, trip history, idle times, stoppages, travel summaries, drivers, routes, schools, or subscriptions. Choose from the quick queries below or type your question!",
+          text: "👋 Hello! I am parentseye.ai, your intelligent fleet assistant. You can ask me anything about vehicle statuses, live KM reports, trip history, idle times, stoppages, travel summaries. Choose from the quick queries below or type your question!",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -214,11 +214,11 @@ export const AiChatBot: React.FC = () => {
       prev.map((msg) =>
         msg.id === botMsgId
           ? {
-              ...msg,
-              isLoading: false,
-              text: result.summary,
-              result,
-            }
+            ...msg,
+            isLoading: false,
+            text: result.summary,
+            result,
+          }
           : msg
       )
     );
@@ -388,7 +388,7 @@ export const AiChatBot: React.FC = () => {
       const isStatusReport =
         result.title?.toLowerCase().includes("status") &&
         (columns.some((c) => c.key === "vehicleStatus" || c.key === "startLocation" || c.key === "startCoordinates") ||
-         sourceData.some((r) => "vehicleStatus" in r || "startCoordinate" in r));
+          sourceData.some((r) => "vehicleStatus" in r || "startCoordinate" in r));
 
       if (isStatusReport) {
         columns = [
@@ -409,9 +409,9 @@ export const AiChatBot: React.FC = () => {
       // Check if exporting stop report to match the stop-report page exactly
       const isStopReport = Boolean(
         (result.title?.toLowerCase().includes("stop") ||
-         result.title?.toLowerCase().includes("stopped") ||
-         result.title?.toLowerCase().includes("stoppage") ||
-         result.title?.toLowerCase().includes("halt")) &&
+          result.title?.toLowerCase().includes("stopped") ||
+          result.title?.toLowerCase().includes("stoppage") ||
+          result.title?.toLowerCase().includes("halt")) &&
         !result.title?.toLowerCase().includes("travel")
       );
 
@@ -441,7 +441,7 @@ export const AiChatBot: React.FC = () => {
           { key: "coordinates", header: "Coordinates" },
         ];
       }
- 
+
       // Check if exporting trip report to match the trip-report page exactly
       const isTripReport = Boolean(
         result.title?.toLowerCase().includes("trip") &&
@@ -499,13 +499,13 @@ export const AiChatBot: React.FC = () => {
               item.startLocation && item.startLocation !== "--" && item.startLocation.length > 5
                 ? item.startLocation
                 : startLat && startLng
-                ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
-                : item.startLocation || "--",
+                  ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
+                  : item.startLocation || "--",
               item.endLocation && item.endLocation !== "--" && item.endLocation.length > 5
                 ? item.endLocation
                 : endLat && endLng
-                ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
-                : item.endLocation || "--",
+                  ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
+                  : item.endLocation || "--",
             ]);
 
             return {
@@ -527,8 +527,8 @@ export const AiChatBot: React.FC = () => {
               item.location && item.location !== "--" && item.location.length > 5
                 ? item.location
                 : lat && lng
-                ? await reverseGeocodeMapTiler(Number(lat), Number(lng)).catch(() => `${lat}, ${lng}`)
-                : item.location || item.address || "--";
+                  ? await reverseGeocodeMapTiler(Number(lat), Number(lng)).catch(() => `${lat}, ${lng}`)
+                  : item.location || item.address || "--";
 
             return {
               ...item,
@@ -537,7 +537,7 @@ export const AiChatBot: React.FC = () => {
           })
         );
       }
- 
+
       // If trip report, ensure all addresses are resolved before exporting
       if (isTripReport) {
         const isCoord = (addr?: string) => !addr || addr === "-" || addr === "--" || /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(addr.trim());
@@ -552,13 +552,13 @@ export const AiChatBot: React.FC = () => {
               item.startAddress && !isCoord(item.startAddress) && item.startAddress.length > 5
                 ? item.startAddress
                 : startLat && startLng
-                ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
-                : item.startAddress || "-",
+                  ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
+                  : item.startAddress || "-",
               item.endAddress && !isCoord(item.endAddress) && item.endAddress.length > 5
                 ? item.endAddress
                 : endLat && endLng
-                ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
-                : item.endAddress || "-",
+                  ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
+                  : item.endAddress || "-",
             ]);
 
             return {
@@ -583,13 +583,13 @@ export const AiChatBot: React.FC = () => {
               item.startAddress && item.startAddress !== "-" && item.startAddress !== "--" && item.startAddress.length > 5
                 ? item.startAddress
                 : startLat && startLng
-                ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
-                : item.startAddress || "-",
+                  ? reverseGeocodeMapTiler(Number(startLat), Number(startLng)).catch(() => `${startLat}, ${startLng}`)
+                  : item.startAddress || "-",
               item.endAddress && item.endAddress !== "-" && item.endAddress !== "--" && item.endAddress.length > 5
                 ? item.endAddress
                 : endLat && endLng
-                ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
-                : item.endAddress || "-",
+                  ? reverseGeocodeMapTiler(Number(endLat), Number(endLng)).catch(() => `${endLat}, ${endLng}`)
+                  : item.endAddress || "-",
             ]);
 
             let enrichedDayWiseTrips = item.dayWiseTrips;
@@ -661,23 +661,23 @@ export const AiChatBot: React.FC = () => {
       const nestedTableConfig =
         isTravelSummary && dataToExport.some((i) => Array.isArray(i.dayWiseTrips) && i.dayWiseTrips.length > 0)
           ? {
-              dataKey: "dayWiseTrips",
-              columns: nestedExportColumns,
-              title: "Day-Wise Details",
-            }
+            dataKey: "dayWiseTrips",
+            columns: nestedExportColumns,
+            title: "Day-Wise Details",
+          }
           : undefined;
 
       const title = isStatusReport
         ? "Vehicle Status Report"
         : isTripReport
-        ? "Vehicle Trip Report"
-        : isStopReport
-        ? "Vehicle Stop Report"
-        : isIdleReport
-        ? "Vehicle Idle Report"
-        : isTravelSummary
-        ? "Travel Summary Report"
-        : result.title || "Fleet Data Report";
+          ? "Vehicle Trip Report"
+          : isStopReport
+            ? "Vehicle Stop Report"
+            : isIdleReport
+              ? "Vehicle Idle Report"
+              : isTravelSummary
+                ? "Travel Summary Report"
+                : result.title || "Fleet Data Report";
       const cleanTitle = title.replace(/[^a-zA-Z0-9_-]/g, "_");
       const dateStr = new Date().toISOString().split("T")[0];
 
@@ -741,11 +741,10 @@ export const AiChatBot: React.FC = () => {
       {/* Floating Chatbot Window */}
       {isOpen && (
         <div
-          className={`fixed z-50 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 ${
-            isExpanded
+          className={`fixed z-50 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 ${isExpanded
               ? "bottom-4 right-4 w-[92vw] md:w-[750px] h-[88vh]"
               : "bottom-6 right-6 w-[94vw] sm:w-[460px] h-[640px] max-h-[85vh]"
-          }`}
+            }`}
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950 text-white px-4 py-3 flex items-center justify-between shadow-md border-b border-amber-500/25">
@@ -823,11 +822,10 @@ export const AiChatBot: React.FC = () => {
 
                 {/* Message Bubble */}
                 <div
-                  className={`max-w-[92%] rounded-2xl p-3.5 text-sm shadow-xs ${
-                    msg.sender === "user"
+                  className={`max-w-[92%] rounded-2xl p-3.5 text-sm shadow-xs ${msg.sender === "user"
                       ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-zinc-950 font-medium rounded-tr-xs shadow-xs"
                       : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 rounded-tl-xs"
-                  }`}
+                    }`}
                 >
                   {/* Loading Spinner */}
                   {msg.isLoading && (
@@ -901,33 +899,33 @@ export const AiChatBot: React.FC = () => {
                       <div className="space-y-2">
                         {/* If question includes date range fields (from_date & to_date), render the existing DateRangeFilter */}
                         {msg.pendingFields.question.fields?.some((f) => f.name === "from_date") &&
-                         msg.pendingFields.question.fields?.some((f) => f.name === "to_date") && (
-                          <div>
-                            <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                              Select Date Range
-                            </label>
-                            <DateRangeFilter
-                              title="Select Date Range"
-                              defaultStartDate={
-                                pendingFormValues.from_date
-                                  ? new Date(pendingFormValues.from_date)
-                                  : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
-                              }
-                              defaultEndDate={
-                                pendingFormValues.to_date
-                                  ? new Date(pendingFormValues.to_date)
-                                  : new Date()
-                              }
-                              onDateRangeChange={(start, end) => {
-                                setPendingFormValues((prev) => ({
-                                  ...prev,
-                                  from_date: start ? formatDateToYYYYMMDD(start) || "" : "",
-                                  to_date: end ? formatDateToYYYYMMDD(end) || "" : "",
-                                }));
-                              }}
-                            />
-                          </div>
-                        )}
+                          msg.pendingFields.question.fields?.some((f) => f.name === "to_date") && (
+                            <div>
+                              <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                                Select Date Range
+                              </label>
+                              <DateRangeFilter
+                                title="Select Date Range"
+                                defaultStartDate={
+                                  pendingFormValues.from_date
+                                    ? new Date(pendingFormValues.from_date)
+                                    : new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
+                                }
+                                defaultEndDate={
+                                  pendingFormValues.to_date
+                                    ? new Date(pendingFormValues.to_date)
+                                    : new Date()
+                                }
+                                onDateRangeChange={(start, end) => {
+                                  setPendingFormValues((prev) => ({
+                                    ...prev,
+                                    from_date: start ? formatDateToYYYYMMDD(start) || "" : "",
+                                    to_date: end ? formatDateToYYYYMMDD(end) || "" : "",
+                                  }));
+                                }}
+                              />
+                            </div>
+                          )}
 
                         {/* Render all other non-date fields */}
                         {msg.pendingFields.question.fields
