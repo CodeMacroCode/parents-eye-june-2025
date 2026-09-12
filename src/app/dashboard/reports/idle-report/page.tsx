@@ -238,11 +238,11 @@ const IdleReportPage: React.FC = () => {
 
       if (type === "pdf") {
         await exportToPDF(preparedData, exportColumns, {
-          title: "Vehicle Stop Report",
+          title: "Vehicle Idle Report",
         });
       } else {
         exportToExcel(preparedData, exportColumns, {
-          title: "Vehicle Stop Report",
+          title: "Vehicle Idle Report",
         });
       }
 
